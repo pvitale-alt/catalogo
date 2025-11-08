@@ -105,7 +105,8 @@
                                 </div>
                                 <div>
                                     <% 
-                                    const score = parseFloat(func.score_total || func.score_calculado || 0);
+                                    let score = func.score_total || func.score_calculado || 0;
+                                    score = parseFloat(score) || 0;
                                     let scoreClass = 'score-low';
                                     if (score >= 4) scoreClass = 'score-high';
                                     else if (score >= 2.5) scoreClass = 'score-medium';
@@ -155,7 +156,8 @@
                                     <% } %>
                                     
                                     <% 
-                                    const score = parseFloat(func.score_total || func.score_calculado || 0);
+                                    let score = func.score_total || func.score_calculado || 0;
+                                    score = parseFloat(score) || 0;
                                     let scoreClass = 'score-low';
                                     if (score >= 4) scoreClass = 'score-high';
                                     else if (score >= 2.5) scoreClass = 'score-medium';

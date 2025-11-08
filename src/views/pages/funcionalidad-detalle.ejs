@@ -42,7 +42,8 @@
                                     <% } %>
                                     
                                     <% 
-                                    const score = parseFloat(funcionalidad.score_total || funcionalidad.score_calculado || 0);
+                                    let score = funcionalidad.score_total || funcionalidad.score_calculado || 0;
+                                    score = parseFloat(score) || 0;
                                     let scoreClass = 'score-low';
                                     if (score >= 4) scoreClass = 'score-high';
                                     else if (score >= 2.5) scoreClass = 'score-medium';
@@ -161,7 +162,7 @@
                                             Origen
                                         </div>
                                         <div style="font-size: 24px; font-weight: 600; color: var(--primary-color);">
-                                            <%= parseFloat(funcionalidad.score_origen).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
+                                            <%= (parseFloat(funcionalidad.score_origen) || 0).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
                                         </div>
                                     </div>
                                 <% } %>
@@ -172,7 +173,7 @@
                                             Facturación
                                         </div>
                                         <div style="font-size: 24px; font-weight: 600; color: var(--primary-color);">
-                                            <%= parseFloat(funcionalidad.score_facturacion).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
+                                            <%= (parseFloat(funcionalidad.score_facturacion) || 0).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
                                         </div>
                                     </div>
                                 <% } %>
@@ -183,7 +184,7 @@
                                             Urgencia
                                         </div>
                                         <div style="font-size: 24px; font-weight: 600; color: var(--primary-color);">
-                                            <%= parseFloat(funcionalidad.score_urgencia).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
+                                            <%= (parseFloat(funcionalidad.score_urgencia) || 0).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
                                         </div>
                                     </div>
                                 <% } %>
@@ -194,7 +195,7 @@
                                             Impacto Cliente
                                         </div>
                                         <div style="font-size: 24px; font-weight: 600; color: var(--primary-color);">
-                                            <%= parseFloat(funcionalidad.score_impacto_cliente).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
+                                            <%= (parseFloat(funcionalidad.score_impacto_cliente) || 0).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
                                         </div>
                                     </div>
                                 <% } %>
