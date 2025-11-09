@@ -188,15 +188,24 @@ app.use((err, req, res, next) => {
 
 // Sincronización con Redmine al iniciar el servidor
 // ⚠️ Solo se ejecuta UNA VEZ al levantar el servidor
+let inicializacionEjecutada = false; // Flag para evitar ejecución múltiple
+
 async function inicializarApp() {
-    // Solo sincronizar en desarrollo (comentar esta línea para sincronizar en producción también)
+    // Evitar ejecución múltiple (importante en Vercel serverless)
+    if (inicializacionEjecutada) {
+        return;
+    }
+    inicializacionEjecutada = true;
+    
+    // En producción (Vercel), NO sincronizar automáticamente
+    // La sincronización debe hacerse manualmente vía API
     if (process.env.NODE_ENV === 'production') {
-        console.log('ℹ️ Sincronización automática deshabilitada en producción');
-        console.log('   Para sincronizar, usar: POST /api/redmine/sincronizar');
+        // Solo mostrar el mensaje UNA VEZ al cargar el módulo por primera vez
+        // No hacer nada más - la sincronización se hace manualmente
         return;
     }
 
-    // Verificar si las credenciales de Redmine están configuradas
+    // Solo en desarrollo: verificar si las credenciales de Redmine están configuradas
     if (!process.env.REDMINE_TOKEN) {
         console.log('⚠️ REDMINE_TOKEN no configurado - sincronización omitida');
         console.log('   Configura REDMINE_TOKEN en .env para habilitar la sincronización');
@@ -238,14 +247,13 @@ if (process.env.NODE_ENV !== 'production') {
         console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
         console.log(`📁 Entorno: ${process.env.NODE_ENV || 'development'}`);
         
-        // Ejecutar sincronización inicial
+        // Ejecutar sincronización inicial SOLO en desarrollo
         await inicializarApp();
     });
 } else {
-    // En producción (Vercel), ejecutar sincronización al cargar el módulo
-    inicializarApp().catch(err => {
-        console.error('❌ Error en inicialización:', err);
-    });
+    // En producción (Vercel), NO ejecutar sincronización automática
+    // El mensaje informativo se removió para evitar logs innecesarios
+    // La sincronización debe hacerse manualmente vía: POST /api/redmine/sincronizar
 }
 
 // Exportar app para Vercel (serverless)
