@@ -43,12 +43,9 @@ app.use(session({
         // Dejar que Express lo maneje automáticamente
         path: '/' // Asegurar que la cookie esté disponible en todas las rutas
     },
-    name: 'catalogo.sid', // Nombre personalizado para la cookie
-    // En Vercel, asegurar que la cookie se establezca correctamente
-    genid: (req) => {
-        // Generar un ID de sesión único
-        return require('crypto').randomBytes(16).toString('hex');
-    }
+    name: 'catalogo.sid' // Nombre personalizado para la cookie
+    // NO usar genid personalizado - dejar que express-session lo maneje automáticamente
+    // genid solo se usa cuando NO hay cookie, y puede interferir con la recuperación de sesiones
 }));
 
 // Configuración de vistas (EJS)
@@ -71,17 +68,39 @@ const requireAuth = (req, res, next) => {
         const sessionCookieMatch = cookieHeader.match(/catalogo\.sid=([^;]+)/);
         const sessionCookieValue = sessionCookieMatch ? sessionCookieMatch[1] : null;
         
+        // Verificar si la cookie está presente
+        const hasSessionCookie = !!sessionCookieValue;
+        const cookieMatches = sessionCookieValue === req.sessionID;
+        
         console.log('🔐 Verificando autenticación:', {
             path: req.path,
             hasSession: !!req.session,
             authenticated: req.session?.authenticated,
             sessionId: req.sessionID,
-            cookie: req.headers.cookie,
+            cookieHeader: cookieHeader,
             sessionCookieValue: sessionCookieValue,
-            sessionCookieMatches: sessionCookieValue === req.sessionID,
+            hasSessionCookie: hasSessionCookie,
+            cookieMatches: cookieMatches,
             sessionKeys: req.session ? Object.keys(req.session) : [],
-            allCookies: req.cookies
+            // Verificar si hay otros cookies
+            allCookies: cookieHeader.split(';').map(c => c.trim())
         });
+        
+        // Si hay cookie pero no coincide con sessionID, hay un problema
+        if (hasSessionCookie && !cookieMatches) {
+            console.warn('⚠️ ADVERTENCIA: Cookie de sesión presente pero no coincide con sessionID', {
+                cookieValue: sessionCookieValue,
+                sessionID: req.sessionID
+            });
+        }
+        
+        // Si no hay cookie pero hay sessionID, la sesión se creó sin cookie
+        if (!hasSessionCookie && req.sessionID) {
+            console.warn('⚠️ ADVERTENCIA: sessionID existe pero no hay cookie en el header', {
+                sessionID: req.sessionID,
+                cookieHeader: cookieHeader
+            });
+        }
     }
     
     // Verificar si la sesión existe y está autenticada
