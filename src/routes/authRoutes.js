@@ -50,10 +50,16 @@ router.post('/', async (req, res) => {
                 });
             });
             
+            // CRÍTICO: En Vercel, express-session puede no establecer la cookie automáticamente
+            // Necesitamos forzar que se establezca llamando a touch() o regenerando
+            // Esto asegura que la cookie se establezca en la respuesta
+            req.session.touch();
+            
             // Verificar que la sesión se guardó correctamente
-            // NO establecer la cookie manualmente - express-session lo hace automáticamente
-            // Establecerla manualmente puede interferir con cómo express-session la maneja
             if (process.env.DEBUG_SESSIONS === 'true' || process.env.NODE_ENV === 'production') {
+                // Esperar un tick para que express-session procese la cookie
+                await new Promise(resolve => setImmediate(resolve));
+                
                 const setCookieHeader = res.getHeader('Set-Cookie');
                 console.log('✅ Sesión guardada exitosamente:', {
                     sessionId: req.sessionID,
@@ -64,6 +70,27 @@ router.post('/', async (req, res) => {
                     // Verificar si la cookie está en los headers de respuesta
                     responseHeaders: Object.keys(res.getHeaders())
                 });
+                
+                // Si la cookie aún no está establecida, establecerla manualmente
+                if (!setCookieHeader || (Array.isArray(setCookieHeader) && !setCookieHeader.some(c => c.includes('catalogo.sid')))) {
+                    const cookieName = 'catalogo.sid';
+                    const cookieValue = req.sessionID;
+                    const isSecure = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+                    
+                    res.cookie(cookieName, cookieValue, {
+                        httpOnly: true,
+                        secure: isSecure,
+                        sameSite: 'lax',
+                        maxAge: 24 * 60 * 60 * 1000, // 24 horas
+                        path: '/'
+                    });
+                    
+                    console.log('🍪 Cookie establecida manualmente después de verificar:', {
+                        cookieName,
+                        cookieValue,
+                        sessionID: req.sessionID
+                    });
+                }
             }
             
             // Redirigir después de guardar y establecer la cookie
