@@ -8,15 +8,25 @@ const session = require('express-session');
 const app = express();
 
 // Configuración de sesiones
+// En Vercel (serverless), las sesiones en memoria funcionan dentro de la misma invocación
+// pero necesitan configuración correcta de cookies para HTTPS
+const isProduction = process.env.NODE_ENV === 'production';
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'catalogo-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction || isVercel, // HTTPS en producción/Vercel
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 horas
-    }
+        sameSite: 'lax', // Compatible con Vercel y navegadores modernos
+        maxAge: 24 * 60 * 60 * 1000, // 24 horas
+        // En Vercel, no especificar dominio para que funcione en todos los subdominios
+        domain: undefined
+    },
+    // En serverless, no usar store persistente (memoria está bien para sesiones cortas)
+    name: 'catalogo.sid' // Nombre personalizado para la cookie
 }));
 
 // Configuración de vistas (EJS)
@@ -32,9 +42,26 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Middleware de autenticación
 const requireAuth = (req, res, next) => {
+    // Log para debug (solo si está habilitado)
+    if (process.env.DEBUG_SESSIONS === 'true') {
+        console.log('🔐 Verificando autenticación:', {
+            path: req.path,
+            hasSession: !!req.session,
+            authenticated: req.session?.authenticated,
+            sessionId: req.sessionID,
+            cookie: req.headers.cookie
+        });
+    }
+    
     if (req.session && req.session.authenticated) {
         return next();
     }
+    
+    // Log si no está autenticado
+    if (process.env.DEBUG_SESSIONS === 'true') {
+        console.log('❌ No autenticado - Redirigiendo a /login');
+    }
+    
     res.redirect('/login');
 };
 

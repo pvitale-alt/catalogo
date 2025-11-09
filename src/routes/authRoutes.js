@@ -25,8 +25,31 @@ router.post('/', (req, res) => {
     
     if (password === HARDCODED_PASSWORD) {
         req.session.authenticated = true;
-        res.redirect('/funcionalidades');
+        
+        // Log para debug (solo en desarrollo o si hay problemas)
+        if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_SESSIONS === 'true') {
+            console.log('✅ Login exitoso - Sesión creada:', {
+                sessionId: req.sessionID,
+                authenticated: req.session.authenticated,
+                cookie: req.headers.cookie
+            });
+        }
+        
+        // Guardar sesión antes de redirigir
+        req.session.save((err) => {
+            if (err) {
+                console.error('❌ Error al guardar sesión:', err);
+                return res.render('pages/login', {
+                    title: 'Login - Catálogo',
+                    error: 'Error al iniciar sesión. Por favor, intente nuevamente.'
+                });
+            }
+            res.redirect('/funcionalidades');
+        });
     } else {
+        if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_SESSIONS === 'true') {
+            console.log('❌ Login fallido - Contraseña incorrecta');
+        }
         res.render('pages/login', {
             title: 'Login - Catálogo',
             error: 'Contraseña incorrecta'

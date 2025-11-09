@@ -467,14 +467,23 @@ h3 {
     background: #f1f3f4;
     border-color: #bdc1c6;
     box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+    opacity: 0.9;
 }
 
 .btn:active {
     transform: scale(0.98);
+    opacity: 0.8;
 }
 
 .btn:focus {
     outline: none;
+}
+
+.btn:disabled,
+.btn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* Botón primario - Estilo Google Drive/Material Design */
@@ -500,9 +509,10 @@ button.btn.btn-primary,
 button.btn-primary:hover,
 button.btn.btn-primary:hover,
 .btn.btn-primary:hover {
-    background: #0A4887;
-    border-color: #0A4887;
+    background: #1f4f80;
+    border-color: #2f5b88;
     box-shadow: 0 1px 3px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+    opacity: 0.9;
 }
 
 button.btn-primary:active,
@@ -510,12 +520,26 @@ button.btn.btn-primary:active,
 .btn.btn-primary:active {
     background: #08396C;
     transform: scale(0.98);
+    opacity: 0.85;
 }
 
 button.btn-primary:focus,
 button.btn.btn-primary:focus,
 .btn.btn-primary:focus {
     outline: none;
+}
+
+button.btn-primary:disabled,
+button.btn.btn-primary:disabled,
+.btn.btn-primary:disabled,
+button.btn-primary[disabled],
+button.btn.btn-primary[disabled],
+.btn.btn-primary[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: rgba(13, 90, 162, 0.6);
+    border-color: rgba(13, 90, 162, 0.6);
 }
 
 /* Select mejorado con estilo Google */
