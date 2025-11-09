@@ -10,15 +10,21 @@ Al hacer deploy en Vercel, el login no funciona correctamente:
 
 ## Causa
 
-En Vercel (entorno serverless), las sesiones requieren configuración especial de cookies para funcionar correctamente con HTTPS.
+En Vercel (entorno serverless), **las sesiones en memoria NO funcionan** porque cada request puede ir a una instancia diferente del servidor. Las sesiones se pierden entre requests, causando que el usuario sea redirigido constantemente a `/login` (error 302).
+
+**Solución:** Usar PostgreSQL como store de sesiones para que persistan entre requests.
 
 ## Solución Implementada
 
-Se actualizó la configuración de sesiones en `src/app.js` para:
-1. Detectar correctamente el entorno de Vercel
-2. Configurar cookies con `secure: true` para HTTPS
-3. Usar `sameSite: 'lax'` para compatibilidad
-4. Guardar la sesión explícitamente antes de redirigir
+Se actualizó la configuración de sesiones en `src/app.js` para usar **PostgreSQL como store de sesiones**:
+
+1. ✅ Instalado `connect-pg-simple` para almacenar sesiones en PostgreSQL
+2. ✅ Configurado el store de sesiones para usar el pool de conexiones existente
+3. ✅ La tabla `session` se crea automáticamente si no existe
+4. ✅ Cookies configuradas correctamente para HTTPS (`secure: true`, `sameSite: 'lax'`)
+5. ✅ Guardado explícito de sesión antes de redirigir
+
+**Esto permite que las sesiones persistan entre requests en Vercel serverless.**
 
 ## Configuración en Vercel
 
@@ -78,25 +84,33 @@ DEBUG_SESSIONS=false
 
 ## Pasos para Solucionar
 
-1. **Generar SESSION_SECRET:**
+1. **Instalar dependencia (si no está instalada):**
+   ```bash
+   npm install connect-pg-simple
+   ```
+   O si ya hiciste push, Vercel la instalará automáticamente.
+
+2. **Generar SESSION_SECRET:**
    ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
 
-2. **Agregar en Vercel:**
+3. **Agregar en Vercel:**
    - Ve a tu proyecto en Vercel
    - Settings > Environment Variables
    - Agregar `SESSION_SECRET` con el valor generado
+   - **Asegúrate de que `DATABASE_URL` también esté configurada** (necesaria para el store de sesiones)
    - Guardar
 
-3. **Redeploy:**
+4. **Redeploy:**
    - Vercel detectará el cambio automáticamente
    - O puedes hacer un nuevo push a GitHub para forzar redeploy
+   - La tabla `session` se creará automáticamente en PostgreSQL
 
-4. **Probar:**
+5. **Probar:**
    - Ir a la URL de tu app en Vercel
    - Intentar hacer login
-   - Debería funcionar correctamente
+   - Debería funcionar correctamente sin redirecciones 302
 
 ## Verificar que Funciona
 
@@ -127,10 +141,13 @@ Si el problema persiste después de configurar `SESSION_SECRET`:
 
 ## Notas Técnicas
 
-- Las sesiones en Vercel funcionan en memoria dentro de la misma invocación
-- Las cookies deben tener `secure: true` porque Vercel usa HTTPS
-- `sameSite: 'lax'` es compatible con navegadores modernos y Vercel
-- El nombre de la cookie es `catalogo.sid` para evitar conflictos
+- **PostgreSQL Store**: Las sesiones se almacenan en la tabla `session` de PostgreSQL
+- **Auto-creación**: La tabla se crea automáticamente con `createTableIfMissing: true`
+- **Pool de conexiones**: Usa el mismo pool de conexiones que el resto de la app
+- **Cookies**: Deben tener `secure: true` porque Vercel usa HTTPS
+- **sameSite**: `'lax'` es compatible con navegadores modernos y Vercel
+- **Cookie name**: `catalogo.sid` para evitar conflictos
+- **Limpieza**: Las sesiones expiradas se limpian automáticamente por `connect-pg-simple`
 
 ## Si Aún No Funciona
 

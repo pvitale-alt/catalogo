@@ -23,6 +23,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "connect-pg-simple": "^9.0.1",
     "dotenv": "^16.3.1",
     "ejs": "^3.1.9",
     "express": "^4.21.2",

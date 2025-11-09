@@ -4,16 +4,23 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const { pool } = require('./config/database');
 
 const app = express();
 
-// Configuración de sesiones
-// En Vercel (serverless), las sesiones en memoria funcionan dentro de la misma invocación
-// pero necesitan configuración correcta de cookies para HTTPS
+// Configuración de sesiones con PostgreSQL Store
+// En Vercel (serverless), las sesiones en memoria NO funcionan porque cada request
+// puede ir a una instancia diferente. Necesitamos usar PostgreSQL como store.
 const isProduction = process.env.NODE_ENV === 'production';
 const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
 
 app.use(session({
+    store: new pgSession({
+        pool: pool, // Usar el pool de conexiones existente
+        tableName: 'session', // Nombre de la tabla en PostgreSQL
+        createTableIfMissing: true // Crear tabla automáticamente si no existe
+    }),
     secret: process.env.SESSION_SECRET || 'catalogo-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
@@ -25,7 +32,6 @@ app.use(session({
         // En Vercel, no especificar dominio para que funcione en todos los subdominios
         domain: undefined
     },
-    // En serverless, no usar store persistente (memoria está bien para sesiones cortas)
     name: 'catalogo.sid' // Nombre personalizado para la cookie
 }));
 
