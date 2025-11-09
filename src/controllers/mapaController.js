@@ -10,7 +10,7 @@ exports.index = async (req, res) => {
         const topFuncionalidades = await MapaModel.obtenerTopFuncionalidades(5);
         
         res.render('pages/mapa', {
-            title: 'Mapa de Clientes y Funcionalidades',
+            title: 'Clientes',
             clientes: mapa.clientes,
             funcionalidades: mapa.funcionalidades,
             relaciones: mapa.relaciones,
@@ -42,11 +42,11 @@ exports.actualizarEstado = async (req, res) => {
         };
         
         // Validar estado comercial
-        const estadosValidos = ['En Desarrollo', 'Implementado', 'Planificado', 'Cancelado'];
-        if (!estadosValidos.includes(datos.estado_comercial)) {
+        const estadosValidos = ['productivo', 'interesado', 'rechazado', 'en desarrollo', 'Propuesta enviada', null];
+        if (datos.estado_comercial && !estadosValidos.includes(datos.estado_comercial)) {
             return res.status(400).json({
                 success: false,
-                error: 'Estado comercial inválido'
+                error: 'Estado comercial inválido. Valores válidos: productivo, interesado, rechazado, en desarrollo, Propuesta enviada'
             });
         }
         
@@ -113,6 +113,56 @@ exports.obtenerDatos = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error al obtener los datos'
+        });
+    }
+};
+
+/**
+ * Crear nuevo cliente
+ */
+exports.crearCliente = async (req, res) => {
+    try {
+        const { nombre, color } = req.body;
+        
+        if (!nombre) {
+            return res.status(400).json({
+                success: false,
+                error: 'El nombre del cliente es requerido'
+            });
+        }
+        
+        const cliente = await MapaModel.crearCliente({ nombre, color });
+        
+        res.json({
+            success: true,
+            cliente,
+            message: 'Cliente creado exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al crear cliente:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al crear el cliente'
+        });
+    }
+};
+
+/**
+ * Obtener todos los clientes
+ */
+exports.obtenerClientes = async (req, res) => {
+    try {
+        const clientes = await MapaModel.obtenerTodosLosClientes();
+        
+        res.json({
+            success: true,
+            clientes
+        });
+    } catch (error) {
+        console.error('Error al obtener clientes:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener los clientes'
         });
     }
 };

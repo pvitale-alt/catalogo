@@ -46,21 +46,26 @@
                     <div style="margin-bottom: 32px;">
                         <% 
                         const criterios = [
-                            { key: 'origen', label: 'Origen', peso: score ? score.peso_origen : 40 },
-                            { key: 'facturacion', label: 'Facturación', peso: score ? score.peso_facturacion : 20 },
+                            { key: 'facturacion', label: 'Facturación', peso: score ? score.peso_facturacion : 40 },
                             { key: 'urgencia', label: 'Urgencia', peso: score ? score.peso_urgencia : 20 },
                             { key: 'facturacion_potencial', label: 'Facturación Potencial', peso: score ? score.peso_facturacion_potencial : 20 },
-                            { key: 'impacto_cliente', label: 'Impacto en Cliente', peso: score ? score.peso_impacto_cliente : 33.33 },
+                            { key: 'impacto_cliente', label: 'Impacto en Cliente', peso: score ? score.peso_impacto_cliente : 20 },
                             { key: 'esfuerzo', label: 'Esfuerzo', peso: score ? score.peso_esfuerzo : 33.33 },
                             { key: 'incertidumbre', label: 'Incertidumbre', peso: score ? score.peso_incertidumbre : 33.33 },
                             { key: 'riesgo', label: 'Riesgo', peso: score ? score.peso_riesgo : 33.33 }
                         ];
                         %>
                         
+                        <% 
+                        const criteriosPositivos = ['facturacion', 'urgencia', 'facturacion_potencial', 'impacto_cliente'];
+                        const criteriosNegativos = ['esfuerzo', 'incertidumbre', 'riesgo'];
+                        %>
                         <% criterios.forEach(criterio => { 
                             const valor = score ? (score[criterio.key] || 0) : 0;
+                            const esNegativo = criteriosNegativos.includes(criterio.key);
+                            const claseCriterio = esNegativo ? 'criterio-negativo' : 'criterio-positivo';
                         %>
-                            <div class="criterio-row">
+                            <div class="criterio-row <%= claseCriterio %>">
                                 <div>
                                     <div class="criterio-label"><%= criterio.label %></div>
                                     <div class="criterio-peso">Peso: <%= criterio.peso %>%</div>
@@ -71,7 +76,7 @@
                                         class="criterio-slider" 
                                         data-criterio="<%= criterio.key %>"
                                         min="0" 
-                                        max="5" 
+                                        max="10" 
                                         value="<%= valor %>"
                                         step="1"
                                     >
@@ -98,13 +103,12 @@
     <script src="/js/main.js"></script>
     <script>
         // Inicializar valores actuales
-        const funcionalidadId = <%= funcionalidad.id %>;
+        const funcionalidadId = <%= funcionalidad.redmine_id || funcionalidad.id %>;
         
         // Cargar valores actuales al inicializar
         if (window.scoreCalculator) {
             <% if (score) { %>
                 scoreCalculator.criterios = {
-                    origen: <%= score.origen || 0 %>,
                     facturacion: <%= score.facturacion || 0 %>,
                     urgencia: <%= score.urgencia || 0 %>,
                     facturacion_potencial: <%= score.facturacion_potencial || 0 %>,
@@ -115,14 +119,13 @@
                 };
                 
                 scoreCalculator.pesos = {
-                    origen: <%= score.peso_origen %>,
-                    facturacion: <%= score.peso_facturacion %>,
-                    urgencia: <%= score.peso_urgencia %>,
-                    facturacion_potencial: <%= score.peso_facturacion_potencial %>,
-                    impacto_cliente: <%= score.peso_impacto_cliente %>,
-                    esfuerzo: <%= score.peso_esfuerzo %>,
-                    incertidumbre: <%= score.peso_incertidumbre %>,
-                    riesgo: <%= score.peso_riesgo %>
+                    facturacion: <%= score.peso_facturacion || 40 %>,
+                    urgencia: <%= score.peso_urgencia || 20 %>,
+                    facturacion_potencial: <%= score.peso_facturacion_potencial || 20 %>,
+                    impacto_cliente: <%= score.peso_impacto_cliente || 20 %>,
+                    esfuerzo: <%= score.peso_esfuerzo || 33.33 %>,
+                    incertidumbre: <%= score.peso_incertidumbre || 33.33 %>,
+                    riesgo: <%= score.peso_riesgo || 33.33 %>
                 };
             <% } %>
         }

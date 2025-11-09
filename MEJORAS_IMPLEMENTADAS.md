@@ -111,3 +111,4 @@ Para verificar que todo funciona:
 
 **Nota**: Si el logo no aparece, verificar la ruta: `/images/logo.png`
 
+

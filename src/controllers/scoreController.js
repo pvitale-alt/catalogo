@@ -63,7 +63,6 @@ exports.actualizar = async (req, res) => {
         const { id } = req.params;
         
         const criterios = {
-            origen: parseInt(req.body.origen) || 0,
             facturacion: parseInt(req.body.facturacion) || 0,
             urgencia: parseInt(req.body.urgencia) || 0,
             facturacion_potencial: parseInt(req.body.facturacion_potencial) || 0,
@@ -73,12 +72,12 @@ exports.actualizar = async (req, res) => {
             riesgo: parseInt(req.body.riesgo) || 0
         };
         
-        // Validar que los valores estén en el rango 0-5
+        // Validar que los valores estén en el rango 0-10
         for (const [key, value] of Object.entries(criterios)) {
-            if (value < 0 || value > 5) {
+            if (value < 0 || value > 10) {
                 return res.status(400).json({
                     success: false,
-                    error: `El criterio ${key} debe estar entre 0 y 5`
+                    error: `El criterio ${key} debe estar entre 0 y 10`
                 });
             }
         }
@@ -153,7 +152,6 @@ exports.actualizarPesos = async (req, res) => {
 exports.calcularPreview = async (req, res) => {
     try {
         const criterios = {
-            origen: parseInt(req.body.origen) || 0,
             facturacion: parseInt(req.body.facturacion) || 0,
             urgencia: parseInt(req.body.urgencia) || 0,
             facturacion_potencial: parseInt(req.body.facturacion_potencial) || 0,
@@ -164,11 +162,10 @@ exports.calcularPreview = async (req, res) => {
         };
         
         const pesos = {
-            peso_origen: parseFloat(req.body.peso_origen) || 40.00,
-            peso_facturacion: parseFloat(req.body.peso_facturacion) || 20.00,
+            peso_facturacion: parseFloat(req.body.peso_facturacion) || 40.00,
             peso_urgencia: parseFloat(req.body.peso_urgencia) || 20.00,
             peso_facturacion_potencial: parseFloat(req.body.peso_facturacion_potencial) || 20.00,
-            peso_impacto_cliente: parseFloat(req.body.peso_impacto_cliente) || 33.33,
+            peso_impacto_cliente: parseFloat(req.body.peso_impacto_cliente) || 20.00,
             peso_esfuerzo: parseFloat(req.body.peso_esfuerzo) || 33.33,
             peso_incertidumbre: parseFloat(req.body.peso_incertidumbre) || 33.33,
             peso_riesgo: parseFloat(req.body.peso_riesgo) || 33.33

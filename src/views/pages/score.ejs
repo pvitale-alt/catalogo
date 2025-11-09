@@ -7,26 +7,20 @@
     <link rel="stylesheet" href="/css/main.css?v=<%= Date.now() %>">
 </head>
 <body>
-    <div class="app-container">
+    <!-- Header General -->
+    <header class="top-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="/images/logo.png" alt="Logo" style="height: 28px; width: auto; display: block;" onerror="this.style.display='none';" />
+            <span style="font-size: 16px; font-weight: 500; color: var(--text-secondary); font-family: 'Google Sans', 'Roboto', sans-serif;">Catálogo</span>
+        </div>
+    </header>
+    
+    <div class="app-container" style="margin-top: 0;">
         <%- include('../partials/sidebar', { activeMenu: 'score' }) %>
         
         <div class="main-content">
-            <%- include('../partials/header') %>
-            
-            <!-- Toolbar -->
-            <div class="toolbar">
-                <div class="toolbar-left">
-                    <h2 style="font-size: 20px; font-weight: 500; margin: 0;">Ranking de Funcionalidades</h2>
-                </div>
-                <div class="toolbar-right">
-                    <span class="text-muted text-small">
-                        <%= ranking.length %> funcionalidades evaluadas
-                    </span>
-                </div>
-            </div>
-            
             <!-- Contenido -->
-            <div class="content-area">
+            <div class="content-area" style="padding-top: 0;">
                 <% if (ranking.length === 0) { %>
                     <div class="empty-state">
                         <div class="empty-state-icon">⭐</div>
@@ -36,23 +30,23 @@
                 <% } else { %>
                     <!-- Estadísticas Globales -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
-                        <div class="card" style="cursor: default;">
+                        <div class="card" style="cursor: default; padding: 16px;">
                             <div class="text-muted text-small">Score Promedio</div>
-                            <div style="font-size: 32px; font-weight: 600; color: var(--primary-color); margin-top: 8px;">
+                            <div style="font-size: 28px; font-weight: 600; color: var(--primary-color); margin-top: 4px;">
                                 <%= estadisticas.promedio ? parseFloat(estadisticas.promedio).toFixed(2) : '0.00' %>
                             </div>
                         </div>
                         
-                        <div class="card" style="cursor: default;">
+                        <div class="card" style="cursor: default; padding: 16px;">
                             <div class="text-muted text-small">Score Máximo</div>
-                            <div style="font-size: 32px; font-weight: 600; color: #1e8e3e; margin-top: 8px;">
+                            <div style="font-size: 28px; font-weight: 600; color: #1e8e3e; margin-top: 4px;">
                                 <%= estadisticas.maximo ? parseFloat(estadisticas.maximo).toFixed(2) : '0.00' %>
                             </div>
                         </div>
                         
-                        <div class="card" style="cursor: default;">
+                        <div class="card" style="cursor: default; padding: 16px;">
                             <div class="text-muted text-small">Score Mínimo</div>
-                            <div style="font-size: 32px; font-weight: 600; color: #d93025; margin-top: 8px;">
+                            <div style="font-size: 28px; font-weight: 600; color: #d93025; margin-top: 4px;">
                                 <%= estadisticas.minimo ? parseFloat(estadisticas.minimo).toFixed(2) : '0.00' %>
                             </div>
                         </div>
@@ -60,12 +54,11 @@
                     
                     <!-- Ranking -->
                     <div class="list-view">
-                        <div class="list-header">
-                            <div style="width: 50px;">Pos</div>
+                        <div class="list-header" style="grid-template-columns: 2fr 1fr 100px 100px;">
                             <div>Funcionalidad</div>
                             <div>Sección</div>
-                            <div style="width: 100px; text-align: center;">Score</div>
-                            <div style="width: 100px; text-align: center;">Acciones</div>
+                            <div style="text-align: center;">Score</div>
+                            <div style="text-align: center;">Acciones</div>
                         </div>
                         
                         <% ranking.forEach((func, index) => { 
@@ -80,15 +73,19 @@
                             else if (index === 1) medalIcon = '🥈';
                             else if (index === 2) medalIcon = '🥉';
                         %>
-                            <div class="list-item" style="grid-template-columns: 50px 2fr 1fr 100px 100px;">
-                                <div style="font-size: 18px; font-weight: 600; text-align: center;">
-                                    <%= medalIcon || (index + 1) %>
-                                </div>
+                            <div class="list-item" style="grid-template-columns: 2fr 1fr 100px 100px;">
                                 <div class="item-title">
                                     <div class="item-icon">
-                                        <%= func.titulo.substring(0, 1).toUpperCase() %>
+                                        <%= (func.titulo || '?').substring(0, 1).toUpperCase() %>
                                     </div>
-                                    <%= func.titulo %>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <% if (medalIcon) { %>
+                                            <span style="font-size: 18px;"><%= medalIcon %></span>
+                                        <% } else { %>
+                                            <span style="font-size: 14px; color: var(--text-secondary); font-weight: 500;"><%= index + 1 %></span>
+                                        <% } %>
+                                        <%= (func.titulo || 'Sin título').length > 60 ? (func.titulo || 'Sin título').substring(0, 60) + '...' : (func.titulo || 'Sin título') %>
+                                    </div>
                                 </div>
                                 <div class="item-text"><%= func.seccion || '-' %></div>
                                 <div style="text-align: center;">
@@ -98,9 +95,8 @@
                                 </div>
                                 <div style="text-align: center;">
                                     <button 
-                                        class="btn" 
-                                        style="padding: 6px 12px; font-size: 13px;"
-                                        onclick="window.location.href='/score/calculadora/<%= func.id %>'"
+                                        class="btn btn-primary" 
+                                        onclick="window.location.href='/score/calculadora/<%= func.redmine_id || func.id %>'"
                                     >
                                         Evaluar
                                     </button>
@@ -116,4 +112,3 @@
     <script src="/js/main.js"></script>
 </body>
 </html>
-

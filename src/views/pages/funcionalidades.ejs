@@ -7,58 +7,126 @@
     <link rel="stylesheet" href="/css/main.css?v=<%= Date.now() %>">
 </head>
 <body>
-    <div class="app-container">
+    <!-- Header General -->
+    <header class="top-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="/images/logo.png" alt="Logo" style="height: 28px; width: auto; display: block;" onerror="this.style.display='none';" />
+            <span style="font-size: 16px; font-weight: 500; color: var(--text-secondary); font-family: 'Google Sans', 'Roboto', sans-serif;">Catálogo</span>
+        </div>
+    </header>
+    
+    <div class="app-container" style="margin-top: 0;">
         <%- include('../partials/sidebar', { activeMenu: 'funcionalidades' }) %>
         
         <div class="main-content">
-            <%- include('../partials/header') %>
-            
             <!-- Toolbar -->
             <div class="toolbar">
-                <div class="toolbar-left">
-                    <button class="btn btn-primary" onclick="window.location.href='/funcionalidades/nuevo'">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                        </svg>
-                        Nueva Funcionalidad
-                    </button>
+                <div class="toolbar-left" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <!-- Chips de filtros aplicados -->
+                    <% if (typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) { %>
+                        <% filtros.secciones.forEach(seccion => { %>
+                            <div class="filter-chip" style="display: inline-flex; align-items: center; background: #e8f0fe; color: var(--primary-color); padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: 500; gap: 8px;">
+                                <span>Sección: <%= seccion %></span>
+                                <button onclick="removerFiltroSeccion('<%= seccion %>')" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; color: var(--primary-color);">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        <% }) %>
+                    <% } %>
                     
-                            <div style="position: relative;">
-                        <button class="filter-btn" onclick="toggleFilterDropdown()" title="Filtrar">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <% if (typeof filtros.sponsors !== 'undefined' && filtros.sponsors.length > 0) { %>
+                        <% filtros.sponsors.forEach(sponsor => { %>
+                            <div class="filter-chip" style="display: inline-flex; align-items: center; background: #e8f0fe; color: var(--primary-color); padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: 500; gap: 8px;">
+                                <span>Sponsor: <%= sponsor %></span>
+                                <button onclick="removerFiltroSponsor('<%= sponsor %>')" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; color: var(--primary-color);">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        <% }) %>
+                    <% } %>
+                    
+                    <!-- Botones de filtro (si no hay filtros aplicados o para agregar más) -->
+                    <div style="position: relative; margin-right: 12px;">
+                        <button class="filter-btn <%= (typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSecciones()" title="Filtrar por Sección">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
                                 <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
                             </svg>
+                            <span style="margin-left: 6px; font-size: 13px;">Sección</span>
                         </button>
-                        <div class="filter-dropdown" id="filterDropdown">
-                            <div style="padding: 12px 16px; font-weight: 600; border-bottom: 1px solid var(--border-color); font-size: 13px; color: var(--text-secondary);">
-                                POR SECCIÓN
-                            </div>
-                            <div class="filter-option <%= !filtros.seccion ? 'selected' : '' %>" onclick="filtrarPor('seccion', '')">
-                                Todas las secciones
-                            </div>
+                        <div class="filter-dropdown" id="filterSecciones" style="display: none;">
                             <% secciones.forEach(seccion => { %>
-                                <div class="filter-option <%= filtros.seccion === seccion ? 'selected' : '' %>" onclick="filtrarPor('seccion', '<%= seccion %>')">
-                                    <%= seccion %>
-                                </div>
+                                <label style="display: flex; align-items: center; padding: 10px 16px; cursor: pointer; transition: background 0.2s;" 
+                                       onmouseover="this.style.background='#f1f3f4'" 
+                                       onmouseout="this.style.background='white'">
+                                    <input 
+                                        type="checkbox" 
+                                        class="filter-checkbox-seccion" 
+                                        value="<%= seccion %>"
+                                        <%= (typeof filtros.secciones !== 'undefined' && filtros.secciones.includes(seccion)) ? 'checked' : '' %>
+                                        style="margin-right: 8px; cursor: pointer;"
+                                        onchange="aplicarFiltros()"
+                                    />
+                                    <span style="font-size: 13px;"><%= seccion %></span>
+                                </label>
                             <% }) %>
-                            <div style="padding: 12px 16px; font-weight: 600; border-bottom: 1px solid var(--border-color); border-top: 1px solid var(--border-color); font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
-                                POR SPONSOR
-                            </div>
-                            <div class="filter-option <%= !filtros.sponsor ? 'selected' : '' %>" onclick="filtrarPor('sponsor', '')">
-                                Todos los sponsors
-                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="position: relative;">
+                        <button class="filter-btn <%= (typeof filtros.sponsors !== 'undefined' && filtros.sponsors.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSponsors()" title="Filtrar por Sponsor">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
+                                <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+                            </svg>
+                            <span style="margin-left: 6px; font-size: 13px;">Sponsor</span>
+                        </button>
+                        <div class="filter-dropdown" id="filterSponsors" style="display: none;">
                             <% if (typeof sponsors !== 'undefined') { %>
                                 <% sponsors.forEach(sponsor => { %>
-                                    <div class="filter-option <%= filtros.sponsor === sponsor ? 'selected' : '' %>" onclick="filtrarPor('sponsor', '<%= sponsor %>')">
-                                        <%= sponsor %>
-                                    </div>
+                                    <label style="display: flex; align-items: center; padding: 10px 16px; cursor: pointer; transition: background 0.2s;" 
+                                           onmouseover="this.style.background='#f1f3f4'" 
+                                           onmouseout="this.style.background='white'">
+                                        <input 
+                                            type="checkbox" 
+                                            class="filter-checkbox-sponsor" 
+                                            value="<%= sponsor %>"
+                                            <%= (typeof filtros.sponsors !== 'undefined' && filtros.sponsors.includes(sponsor)) ? 'checked' : '' %>
+                                            style="margin-right: 8px; cursor: pointer;"
+                                            onchange="aplicarFiltros()"
+                                        />
+                                        <span style="font-size: 13px;"><%= sponsor %></span>
+                                    </label>
                                 <% }) %>
                             <% } %>
                         </div>
                     </div>
+                    
+                    <% if ((typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) || (typeof filtros.sponsors !== 'undefined' && filtros.sponsors.length > 0)) { %>
+                        <button onclick="limpiarFiltros()" style="background: none; border: none; color: var(--text-secondary); font-size: 13px; cursor: pointer; padding: 6px 12px; border-radius: 16px; transition: background 0.2s;" onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='transparent'">
+                            Borrar filtros
+                        </button>
+                    <% } %>
                 </div>
                 
-                <div class="toolbar-right">
+                <div class="toolbar-right" style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: center; width: 100%;">
+                    <!-- Buscador -->
+                    <form onsubmit="buscar(event)" class="search-box" style="max-width: 600px; width: 100%; margin: 0 auto;">
+                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                        <input 
+                            type="text" 
+                            class="search-input" 
+                            id="searchInput" 
+                            placeholder="Buscar funcionalidades..."
+                            value="<%= typeof filtros !== 'undefined' && filtros.busqueda ? filtros.busqueda : '' %>"
+                            autocomplete="off"
+                        >
+                    </form>
+                    
                     <div class="view-toggle">
                         <button class="view-btn <%= vista === 'lista' ? 'active' : '' %>" onclick="cambiarVista('lista')" title="Vista de lista">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -84,10 +152,7 @@
                     <div class="empty-state">
                         <div class="empty-state-icon">📋</div>
                         <div class="empty-state-text">No se encontraron funcionalidades</div>
-                        <div class="empty-state-subtext">Comienza creando una nueva funcionalidad</div>
-                        <button class="btn btn-primary mt-4" onclick="window.location.href='/funcionalidades/nuevo'">
-                            Nueva Funcionalidad
-                        </button>
+                        <div class="empty-state-subtext">Las funcionalidades se sincronizan automáticamente desde Redmine al iniciar el servidor</div>
                     </div>
                 <% } else if (vista === 'lista') { %>
                     <!-- Vista de Lista -->
@@ -122,8 +187,8 @@
                                     </svg>
                                 </button>
                             </div>
-                            <div onclick="ordenar('productivo_en')" style="cursor: pointer;" class="desktop-only" data-sort="productivo_en">
-                                Productivo en
+                            <div onclick="ordenar('epic_redmine')" style="cursor: pointer;" class="desktop-only" data-sort="epic_redmine">
+                                Epic Redmine
                                 <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M7 10l5 5 5-5z"/>
                                 </svg>
@@ -137,13 +202,13 @@
                         </div>
                         
                         <% funcionalidades.forEach(func => { %>
-                            <div class="list-item" onclick="verDetalle(<%= func.id %>)">
+                            <div class="list-item" onclick="verDetalle(<%= func.redmine_id %>)">
                                 <div class="item-title">
                                     <div class="item-icon">
-                                        <%= func.titulo.substring(0, 1).toUpperCase() %>
+                                        <%= (func.titulo || '?').substring(0, 1).toUpperCase() %>
                                     </div>
                                     <div>
-                                        <div><%= func.titulo %></div>
+                                        <div><%= (func.titulo || 'Sin título').length > 35 ? (func.titulo || 'Sin título').substring(0, 35) + '...' : (func.titulo || 'Sin título') %></div>
                                         <% if (func.descripcion) { %>
                                             <div class="text-small text-muted text-truncate" style="max-width: 400px;">
                                                 <%= func.descripcion %>
@@ -161,7 +226,13 @@
                                     <% } %>
                                 </div>
                                 <div class="item-text desktop-only">
-                                    <%= func.productivo_en ? new Date(func.productivo_en).toLocaleDateString('es-AR') : '-' %>
+                                    <% if (func.epic_redmine) { %>
+                                        <a href="<%= func.epic_redmine %>" target="_blank" onclick="event.stopPropagation();" style="color: var(--primary-color); text-decoration: none;">
+                                            Ver en Redmine
+                                        </a>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
                                 </div>
                                 <div>
                                     <% 
@@ -182,10 +253,10 @@
                     <!-- Vista de Tarjetas -->
                     <div class="cards-view">
                         <% funcionalidades.forEach(func => { %>
-                            <div class="card" onclick="verDetalle(<%= func.id %>)">
+                            <div class="card" onclick="verDetalle(<%= func.redmine_id %>)">
                                 <div class="card-header">
-                                    <h3 class="card-title"><%= func.titulo %></h3>
-                                    <button class="card-menu" onclick="event.stopPropagation(); eliminarFuncionalidad(<%= func.id %>)">
+                                    <h3 class="card-title"><%= (func.titulo || 'Sin título').length > 35 ? (func.titulo || 'Sin título').substring(0, 35) + '...' : (func.titulo || 'Sin título') %></h3>
+                                    <button class="card-menu" onclick="event.stopPropagation(); eliminarFuncionalidad(<%= func.redmine_id %>)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
                                         </svg>

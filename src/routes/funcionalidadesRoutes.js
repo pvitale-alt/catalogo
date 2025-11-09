@@ -12,6 +12,7 @@ router.get('/:id/editar', funcionalidadesController.editarFormulario);
 router.post('/', funcionalidadesController.crear);
 router.put('/:id', funcionalidadesController.actualizar);
 router.delete('/:id', funcionalidadesController.eliminar);
+router.get('/:id/clientes', funcionalidadesController.obtenerClientes);
 
 module.exports = router;
 

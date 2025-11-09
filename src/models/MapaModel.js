@@ -7,15 +7,15 @@ class MapaModel {
     static async obtenerMapa() {
         try {
             // Obtener todos los clientes
-            const queryClientes = 'SELECT * FROM clientes WHERE activo = true ORDER BY nombre';
+            const queryClientes = 'SELECT * FROM clientes ORDER BY nombre';
             const resultClientes = await pool.query(queryClientes);
             
-            // Obtener todas las funcionalidades
+            // Obtener todas las funcionalidades desde la vista combinada
             const queryFuncionalidades = `
-                SELECT f.*, s.score_calculado 
-                FROM funcionalidades f
-                LEFT JOIN score s ON f.id = s.funcionalidad_id
-                ORDER BY f.titulo
+                SELECT v.*, s.score_calculado 
+                FROM v_funcionalidades_completas v
+                LEFT JOIN score s ON v.redmine_id = s.funcionalidad_id
+                ORDER BY v.titulo
             `;
             const resultFuncionalidades = await pool.query(queryFuncionalidades);
             
@@ -25,8 +25,8 @@ class MapaModel {
                     cliente_id,
                     funcionalidad_id,
                     estado_comercial,
-                    fecha_inicio,
-                    fecha_fin
+                    created_at,
+                    updated_at
                 FROM cliente_funcionalidad
             `;
             const resultRelaciones = await pool.query(queryRelaciones);
@@ -37,8 +37,8 @@ class MapaModel {
                 const key = `${rel.cliente_id}-${rel.funcionalidad_id}`;
                 relacionesMap[key] = {
                     estado: rel.estado_comercial,
-                    fecha_inicio: rel.fecha_inicio,
-                    fecha_fin: rel.fecha_fin
+                    created_at: rel.created_at,
+                    updated_at: rel.updated_at
                 };
             });
             
@@ -55,28 +55,25 @@ class MapaModel {
 
     /**
      * Actualizar estado comercial de cliente-funcionalidad
+     * @param {number} clienteId - ID del cliente
+     * @param {number} funcionalidadId - redmine_id de la funcionalidad
      */
     static async actualizarEstado(clienteId, funcionalidadId, datos) {
         try {
             const query = `
                 INSERT INTO cliente_funcionalidad 
-                (cliente_id, funcionalidad_id, estado_comercial, fecha_inicio, fecha_fin, notas)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                (cliente_id, funcionalidad_id, estado_comercial)
+                VALUES ($1, $2, $3)
                 ON CONFLICT (cliente_id, funcionalidad_id) 
                 DO UPDATE SET 
                     estado_comercial = $3,
-                    fecha_inicio = $4,
-                    fecha_fin = $5,
-                    notas = $6
+                    updated_at = CURRENT_TIMESTAMP
                 RETURNING *
             `;
             const values = [
                 clienteId,
-                funcionalidadId,
-                datos.estado_comercial,
-                datos.fecha_inicio || null,
-                datos.fecha_fin || null,
-                datos.notas || null
+                funcionalidadId, // redmine_id
+                datos.estado_comercial || null // null por defecto
             ];
             const result = await pool.query(query, values);
             return result.rows[0];
@@ -88,6 +85,8 @@ class MapaModel {
 
     /**
      * Eliminar relación cliente-funcionalidad
+     * @param {number} clienteId - ID del cliente
+     * @param {number} funcionalidadId - redmine_id de la funcionalidad
      */
     static async eliminarRelacion(clienteId, funcionalidadId) {
         try {
@@ -96,7 +95,7 @@ class MapaModel {
                 WHERE cliente_id = $1 AND funcionalidad_id = $2
                 RETURNING *
             `;
-            const result = await pool.query(query, [clienteId, funcionalidadId]);
+            const result = await pool.query(query, [clienteId, funcionalidadId]); // funcionalidadId es redmine_id
             return result.rows[0] || null;
         } catch (error) {
             console.error('Error al eliminar relación:', error);
@@ -134,20 +133,120 @@ class MapaModel {
     }
 
     /**
+     * Crear nuevo cliente
+     */
+    static async crearCliente(datos) {
+        try {
+            const query = `
+                INSERT INTO clientes (nombre, color)
+                VALUES ($1, $2)
+                RETURNING *
+            `;
+            const values = [
+                datos.nombre,
+                datos.color || '#0D5AA2'
+            ];
+            const result = await pool.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error al crear cliente:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener todos los clientes (incluyendo inactivos)
+     */
+    static async obtenerTodosLosClientes() {
+        try {
+            const query = 'SELECT * FROM clientes ORDER BY nombre';
+            const result = await pool.query(query);
+            return result.rows;
+        } catch (error) {
+            console.error('Error al obtener clientes:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener clientes de una funcionalidad (por redmine_id)
+     */
+    /**
+     * Obtener clientes de una funcionalidad (por redmine_id) con estado "productivo"
+     */
+    static async obtenerClientesPorFuncionalidad(redmine_id) {
+        try {
+            const query = `
+                SELECT c.*
+                FROM clientes c
+                INNER JOIN cliente_funcionalidad cf ON c.id = cf.cliente_id
+                WHERE cf.funcionalidad_id = $1 AND cf.estado_comercial = 'productivo'
+                ORDER BY c.nombre
+            `;
+            const result = await pool.query(query, [redmine_id]);
+            return result.rows;
+        } catch (error) {
+            console.error('Error al obtener clientes por funcionalidad:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Agregar cliente a funcionalidad (productivo en)
+     */
+    static async agregarClienteAFuncionalidad(clienteId, redmineId, estadoComercial = null) {
+        try {
+            const query = `
+                INSERT INTO cliente_funcionalidad (cliente_id, funcionalidad_id, estado_comercial)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (cliente_id, funcionalidad_id) 
+                DO UPDATE SET 
+                    estado_comercial = $3,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING *
+            `;
+            const result = await pool.query(query, [clienteId, redmineId, estadoComercial]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error al agregar cliente a funcionalidad:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Eliminar cliente de funcionalidad
+     */
+    static async eliminarClienteDeFuncionalidad(clienteId, redmineId) {
+        try {
+            const query = `
+                DELETE FROM cliente_funcionalidad 
+                WHERE cliente_id = $1 AND funcionalidad_id = $2
+                RETURNING *
+            `;
+            const result = await pool.query(query, [clienteId, redmineId]);
+            return result.rows[0] || null;
+        } catch (error) {
+            console.error('Error al eliminar cliente de funcionalidad:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Obtener funcionalidades más implementadas
      */
     static async obtenerTopFuncionalidades(limite = 10) {
         try {
             const query = `
                 SELECT 
-                    f.id,
-                    f.titulo,
-                    f.seccion,
+                    v.redmine_id,
+                    v.titulo,
+                    v.seccion,
+                    v.sponsor,
                     COUNT(cf.id) as total_clientes,
                     COUNT(CASE WHEN cf.estado_comercial = 'Implementado' THEN 1 END) as implementados
-                FROM funcionalidades f
-                LEFT JOIN cliente_funcionalidad cf ON f.id = cf.funcionalidad_id
-                GROUP BY f.id, f.titulo, f.seccion
+                FROM v_funcionalidades_completas v
+                LEFT JOIN cliente_funcionalidad cf ON v.redmine_id = cf.funcionalidad_id
+                GROUP BY v.redmine_id, v.titulo, v.seccion, v.sponsor
                 ORDER BY total_clientes DESC
                 LIMIT $1
             `;

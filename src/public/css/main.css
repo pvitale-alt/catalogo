@@ -8,6 +8,14 @@
     box-sizing: border-box;
 }
 
+/* Asegurar que los botones no sean afectados por el reset */
+button.btn,
+button.btn-primary,
+.btn,
+.btn-primary {
+    margin: 0;
+}
+
 :root {
     --sidebar-width: 256px;
     --header-height: 64px;
@@ -27,6 +35,23 @@ body {
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    padding-top: 56px; /* Espacio para el header fijo */
+}
+
+/* Header general superior */
+.top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: white;
+    border-bottom: 1px solid var(--border-color);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 /* Tipografía moderna */
@@ -304,6 +329,54 @@ h3 {
     align-items: center;
 }
 
+/* Botones de filtro estilo Material Design */
+.filter-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 24px;
+    border: 1px solid var(--border-color);
+    background: white;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Google Sans', 'Roboto', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    gap: 6px;
+    letter-spacing: 0.25px;
+    height: 36px;
+    min-width: auto;
+    box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+}
+
+.filter-btn:hover {
+    background: var(--hover-bg);
+    border-color: #bdc1c6;
+    box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+}
+
+.filter-btn:active {
+    transform: scale(0.98);
+}
+
+.filter-btn.filter-btn-active {
+    background: #e8f0fe;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.filter-btn.filter-btn-active svg {
+    color: var(--primary-color);
+}
+
+.filter-btn svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-secondary);
+}
+
+/* Estilo anterior del filter-btn (comentado para referencia)
 .filter-btn {
     padding: 10px;
     border-radius: 50%;
@@ -364,10 +437,11 @@ h3 {
     font-weight: 500;
 }
 
+/* Botón estándar - Estilo Google Drive/Material Design */
 .btn {
     padding: 10px 24px;
     border-radius: 24px;
-    border: 1px solid var(--border-color);
+    border: 1px solid #dadce0;
     background: white;
     font-size: 14px;
     font-weight: 500;
@@ -381,10 +455,16 @@ h3 {
     letter-spacing: 0.25px;
     height: 40px;
     min-width: 100px;
+    box-shadow: none;
+    outline: none;
+    position: relative;
+    overflow: hidden;
+    color: var(--text-primary);
+    text-transform: none;
 }
 
 .btn:hover {
-    background: var(--hover-bg);
+    background: #f1f3f4;
     border-color: #bdc1c6;
     box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
 }
@@ -393,22 +473,49 @@ h3 {
     transform: scale(0.98);
 }
 
-.btn-primary {
+.btn:focus {
+    outline: none;
+}
+
+/* Botón primario - Estilo Google Drive/Material Design */
+button.btn-primary,
+button.btn.btn-primary,
+.btn.btn-primary {
     background: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
     font-weight: 600;
     box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+    padding: 10px 24px;
+    border-radius: 24px;
+    border: 1px solid var(--primary-color);
+    height: 40px;
+    min-width: 100px;
+    font-size: 14px;
+    font-family: 'Google Sans', 'Roboto', sans-serif;
+    letter-spacing: 0.25px;
+    text-transform: none;
 }
 
-.btn-primary:hover {
+button.btn-primary:hover,
+button.btn.btn-primary:hover,
+.btn.btn-primary:hover {
     background: #0A4887;
     border-color: #0A4887;
     box-shadow: 0 1px 3px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
 }
 
-.btn-primary:active {
+button.btn-primary:active,
+button.btn.btn-primary:active,
+.btn.btn-primary:active {
     background: #08396C;
+    transform: scale(0.98);
+}
+
+button.btn-primary:focus,
+button.btn.btn-primary:focus,
+.btn.btn-primary:focus {
+    outline: none;
 }
 
 /* Select mejorado con estilo Google */
@@ -494,6 +601,7 @@ select.btn:focus {
     align-items: center;
     gap: 4px;
     user-select: none;
+    padding: 0;
 }
 
 .sort-icon {
@@ -734,16 +842,21 @@ select.btn:focus {
 .mapa-table td {
     padding: 12px 16px;
     text-align: left;
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(218, 220, 224, 0.1);
+}
+
+.mapa-table td {
+    border: 1px solid rgba(218, 220, 224, 0.1);
 }
 
 .mapa-table th {
     background: var(--hover-bg);
-    font-weight: 500;
-    font-size: 13px;
-    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
     position: sticky;
     top: 0;
+    padding: 16px 24px;
 }
 
 .mapa-table th:first-child,
@@ -788,8 +901,20 @@ select.btn:focus {
     grid-template-columns: 200px 1fr 80px;
     gap: 16px;
     align-items: center;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.criterio-row.criterio-positivo {
+    background: rgba(52, 168, 83, 0.08); /* Verde muy suave */
+    border: 1px solid rgba(52, 168, 83, 0.15);
+}
+
+.criterio-row.criterio-negativo {
+    background: rgba(234, 67, 53, 0.08); /* Rojo muy suave */
+    border: 1px solid rgba(234, 67, 53, 0.15);
 }
 
 .criterio-label {

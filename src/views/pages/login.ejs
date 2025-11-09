@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Catálogo</title>
+    <link rel="stylesheet" href="/css/main.css?v=<%= Date.now() %>">
+    <style>
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #f8f9fa;
+        }
+        .login-box {
+            background: white;
+            padding: 48px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-logo img {
+            height: 48px;
+            width: auto;
+        }
+        .login-title {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .login-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .login-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 14px;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.2s;
+        }
+        .login-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(13, 90, 162, 0.1);
+        }
+        .login-btn {
+            width: 100%;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+        }
+        .login-btn:hover {
+            background: #0A4887;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .login-error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-logo">
+                <img src="/images/logo.png" alt="Logo" />
+            </div>
+            <h1 class="login-title">Catálogo</h1>
+            <p class="login-subtitle">Ingrese su contraseña para continuar</p>
+            
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="login-error">
+                    <%= error %>
+                </div>
+            <% } %>
+            
+            <form class="login-form" method="POST" action="/login">
+                <input 
+                    type="password" 
+                    name="password" 
+                    class="login-input" 
+                    placeholder="Contraseña"
+                    required
+                    autofocus
+                />
+                <button type="submit" class="login-btn">
+                    Ingresar
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+

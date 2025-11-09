@@ -7,16 +7,27 @@
     <link rel="stylesheet" href="/css/main.css?v=<%= Date.now() %>">
 </head>
 <body>
-    <div class="app-container">
+    <!-- Header General -->
+    <header class="top-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="/images/logo.png" alt="Logo" style="height: 28px; width: auto; display: block;" onerror="this.style.display='none';" />
+            <span style="font-size: 16px; font-weight: 500; color: var(--text-secondary); font-family: 'Google Sans', 'Roboto', sans-serif;">Catálogo</span>
+        </div>
+    </header>
+    
+    <div class="app-container" style="margin-top: 0;">
         <%- include('../partials/sidebar', { activeMenu: 'mapa' }) %>
         
         <div class="main-content">
-            <%- include('../partials/header') %>
-            
             <!-- Toolbar -->
             <div class="toolbar">
                 <div class="toolbar-left">
-                    <h2 style="font-size: 20px; font-weight: 500; margin: 0;">Mapa de Clientes y Funcionalidades</h2>
+                    <button class="btn btn-primary" onclick="abrirModalNuevoCliente()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Nuevo Cliente
+                    </button>
                 </div>
                 <div class="toolbar-right">
                     <span class="text-muted text-small">
@@ -27,59 +38,38 @@
             
             <!-- Contenido -->
             <div class="content-area">
-                <!-- Estadísticas -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
-                    <div class="card" style="cursor: default;">
-                        <div class="text-muted text-small">Total Relaciones</div>
-                        <div style="font-size: 32px; font-weight: 600; color: var(--primary-color); margin-top: 8px;">
-                            <%= estadisticas.total %>
-                        </div>
-                    </div>
-                    
-                    <% estadisticas.por_estado.forEach(estado => { 
-                        let color = '#5f6368';
-                        if (estado.estado_comercial === 'Implementado') color = '#1e8e3e';
-                        else if (estado.estado_comercial === 'En Desarrollo') color = '#1a73e8';
-                        else if (estado.estado_comercial === 'Planificado') color = '#f9ab00';
-                    %>
-                        <div class="card" style="cursor: default;">
-                            <div class="text-muted text-small"><%= estado.estado_comercial %></div>
-                            <div style="font-size: 32px; font-weight: 600; color: <%= color %>; margin-top: 8px;">
-                                <%= estado.cantidad %>
-                            </div>
-                        </div>
-                    <% }) %>
-                </div>
                 
                 <!-- Mapa Grid -->
                 <div class="mapa-grid">
                     <table class="mapa-table">
                         <thead>
                             <tr>
-                                <th style="min-width: 200px;">Funcionalidad / Cliente</th>
+                                <th style="min-width: 80px; width: 80px; background: var(--hover-bg); font-weight: 600; font-size: 14px; color: var(--text-primary); padding: 16px 24px; border-bottom: 1px solid var(--border-color);">Funcionalidad</th>
                                 <% clientes.forEach(cliente => { %>
-                                    <th style="min-width: 150px;"><%= cliente.nombre %></th>
+                                    <th style="min-width: 30px; width: 35px; background: var(--hover-bg); font-weight: 600; font-size: 14px; color: var(--text-primary); padding: 16px 24px; border-bottom: 1px solid var(--border-color);">
+                                        <%= cliente.nombre %>
+                                    </th>
                                 <% }) %>
                             </tr>
                         </thead>
                         <tbody>
                             <% funcionalidades.forEach(func => { %>
                                 <tr>
-                                    <td style="font-weight: 500;">
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div class="item-icon" style="flex-shrink: 0;">
-                                                <%= func.titulo.substring(0, 1).toUpperCase() %>
+                                    <td style="font-weight: 500; font-size: 11px; padding: 6px; border: 1px solid rgba(218, 220, 224, 0.1);">
+                                        <div style="display: flex; align-items: center; gap: 4px;">
+                                            <div class="item-icon" style="flex-shrink: 0; width: 20px; height: 20px; font-size: 10px;">
+                                                <%= (func.titulo || '?').substring(0, 1).toUpperCase() %>
                                             </div>
-                                            <div>
-                                                <%= func.titulo %>
+                                            <div style="font-size: 11px; line-height: 1.2;">
+                                                <%= (func.titulo || 'Sin título').length > 35 ? (func.titulo || 'Sin título').substring(0, 35) + '...' : (func.titulo || 'Sin título') %>
                                                 <% if (func.score_calculado) { %>
                                                     <% 
-                                                    const score = parseFloat(func.score_calculado);
+                                                    const score = parseFloat(func.score_calculado) || 0;
                                                     let scoreClass = 'score-low';
                                                     if (score >= 4) scoreClass = 'score-high';
                                                     else if (score >= 2.5) scoreClass = 'score-medium';
                                                     %>
-                                                    <span class="score-badge <%= scoreClass %>" style="margin-left: 8px; font-size: 11px;">
+                                                    <span class="score-badge <%= scoreClass %>" style="margin-left: 4px; font-size: 9px; padding: 1px 4px;">
                                                         <%= score.toFixed(1) %>
                                                     </span>
                                                 <% } %>
@@ -87,7 +77,7 @@
                                         </div>
                                     </td>
                                     <% clientes.forEach(cliente => { 
-                                        const key = `${cliente.id}-${func.id}`;
+                                        const key = `${cliente.id}-${func.redmine_id || func.id}`;
                                         const relacion = relaciones[key];
                                         let estado = relacion ? relacion.estado : null;
                                         let claseEstado = '';
@@ -95,31 +85,65 @@
                                         
                                         if (estado) {
                                             textoEstado = estado;
-                                            if (estado === 'Implementado') claseEstado = 'estado-implementado';
-                                            else if (estado === 'En Desarrollo') claseEstado = 'estado-desarrollo';
-                                            else if (estado === 'Planificado') claseEstado = 'estado-planificado';
-                                            else if (estado === 'Cancelado') claseEstado = 'estado-cancelado';
+                                            if (estado === 'productivo') claseEstado = 'estado-implementado';
+                                            else if (estado === 'en desarrollo') claseEstado = 'estado-desarrollo';
+                                            else if (estado === 'interesado') claseEstado = 'estado-planificado';
+                                            else if (estado === 'rechazado') claseEstado = 'estado-cancelado';
+                                            else if (estado === 'Propuesta enviada') claseEstado = 'estado-planificado';
                                         }
                                     %>
-                                        <td class="mapa-cell">
-                                            <% if (estado) { %>
-                                                <span 
-                                                    class="mapa-cell-content <%= claseEstado %>"
-                                                    onclick="if (window.mapa) mapa.mostrarModalEstado(<%= cliente.id %>, <%= func.id %>, '<%= estado %>')"
-                                                    data-cliente="<%= cliente.id %>"
-                                                    data-funcionalidad="<%= func.id %>"
+                                        <% 
+                                        let cellStyle = '';
+                                        if (estado) {
+                                            if (estado === 'productivo') {
+                                                cellStyle = 'background: rgba(200, 230, 201, 0.25); padding: 2px 4px; width: 35px; height: 24px; position: relative; cursor: pointer; text-align: center; color: var(--text-secondary); font-size: 11px;';
+                                            } else if (estado === 'en desarrollo') {
+                                                cellStyle = 'background: rgba(255, 249, 196, 0.25); padding: 2px 4px; width: 35px; height: 24px; position: relative; cursor: pointer; text-align: center; color: var(--text-secondary); font-size: 11px;';
+                                            } else if (estado === 'interesado') {
+                                                cellStyle = 'background: rgba(187, 222, 251, 0.25); padding: 2px 4px; width: 35px; height: 24px; position: relative; cursor: pointer; text-align: center; color: var(--text-secondary); font-size: 11px;';
+                                            } else if (estado === 'rechazado') {
+                                                cellStyle = 'background: rgba(255, 205, 210, 0.25); padding: 2px 4px; width: 35px; height: 24px; position: relative; cursor: pointer; text-align: center; color: var(--text-secondary); font-size: 11px;';
+                                            } else if (estado === 'Propuesta enviada') {
+                                                cellStyle = 'background: rgba(225, 190, 231, 0.25); padding: 2px 4px; width: 35px; height: 24px; position: relative; cursor: pointer; text-align: center; color: var(--text-secondary); font-size: 11px;';
+                                            } else {
+                                                cellStyle = 'background: rgba(245, 245, 245, 0.25); padding: 2px 4px; width: 35px; height: 24px; position: relative; cursor: pointer; text-align: center; color: var(--text-secondary); font-size: 11px;';
+                                            }
+                                        } else {
+                                            cellStyle = 'background: transparent; padding: 2px 4px; width: 35px; height: 24px; position: relative; cursor: pointer; text-align: center; color: var(--text-secondary); font-size: 11px;';
+                                        }
+                                        %>
+                                        <td class="mapa-cell item-text" 
+                                            style="<%= cellStyle %>"
+                                            onclick="mostrarDropdownEstado(event, <%= cliente.id %>, <%= func.redmine_id || func.id %>, '<%= estado || null %>')"
+                                            data-cliente="<%= cliente.id %>"
+                                            data-funcionalidad="<%= func.redmine_id || func.id %>"
+                                        >
+                                            <%= estado ? textoEstado : '+' %>
+                                            <!-- Dropdown de estados -->
+                                            <div id="dropdown-estado-<%= cliente.id %>-<%= func.redmine_id || func.id %>" 
+                                                 style="display: none; position: absolute; top: 100%; left: 0; z-index: 100; background: white; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 160px; margin-top: 4px;">
+                                                <% 
+                                                const estadosDisponibles = ['productivo', 'interesado', 'rechazado', 'en desarrollo', 'Propuesta enviada'];
+                                                estadosDisponibles.forEach(estadoDisponible => {
+                                                %>
+                                                    <div 
+                                                        onclick="seleccionarEstado(<%= cliente.id %>, <%= func.redmine_id || func.id %>, '<%= estadoDisponible %>')"
+                                                        style="padding: 10px 16px; cursor: pointer; font-size: 13px; transition: background 0.2s; <%= estado === estadoDisponible ? 'background: #e8f0fe; font-weight: 500;' : '' %>"
+                                                        onmouseover="this.style.background='#f1f3f4'"
+                                                        onmouseout="this.style.background='<%= estado === estadoDisponible ? '#e8f0fe' : 'white' %>'"
+                                                    >
+                                                        <%= estadoDisponible.charAt(0).toUpperCase() + estadoDisponible.slice(1) %>
+                                                    </div>
+                                                <% }) %>
+                                                <div 
+                                                    onclick="seleccionarEstado(<%= cliente.id %>, <%= func.redmine_id || func.id %>, null)"
+                                                    style="padding: 10px 16px; cursor: pointer; font-size: 13px; border-top: 1px solid var(--border-color); color: var(--text-secondary); transition: background 0.2s;"
+                                                    onmouseover="this.style.background='#f1f3f4'"
+                                                    onmouseout="this.style.background='white'"
                                                 >
-                                                    <%= textoEstado %>
-                                                </span>
-                                            <% } else { %>
-                                                <button 
-                                                    class="btn" 
-                                                    style="padding: 4px 8px; font-size: 12px;"
-                                                    onclick="if (window.mapa) mapa.mostrarModalEstado(<%= cliente.id %>, <%= func.id %>, null)"
-                                                >
-                                                    +
-                                                </button>
-                                            <% } %>
+                                                    Limpiar
+                                                </div>
+                                            </div>
                                         </td>
                                     <% }) %>
                                 </tr>
@@ -128,64 +152,285 @@
                     </table>
                 </div>
                 
-                <!-- Leyenda -->
-                <div class="card" style="margin-top: 24px; cursor: default;">
-                    <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Estados Comerciales</h4>
-                    <div style="display: flex; flex-wrap: wrap; gap: 16px;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="estado-badge estado-implementado">Implementado</span>
-                            <span class="text-muted text-small">Funcionalidad activa en producción</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="estado-badge estado-desarrollo">En Desarrollo</span>
-                            <span class="text-muted text-small">Actualmente en desarrollo</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="estado-badge estado-planificado">Planificado</span>
-                            <span class="text-muted text-small">Planificado para el futuro</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="estado-badge estado-cancelado">Cancelado</span>
-                            <span class="text-muted text-small">Proyecto cancelado</span>
+                <!-- Métricas -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px;">
+                    <div class="card" style="cursor: default;">
+                        <div class="text-muted text-small">Total Clientes</div>
+                        <div style="font-size: 32px; font-weight: 600; color: var(--primary-color); margin-top: 8px;">
+                            <%= clientes.length %>
                         </div>
                     </div>
+                    
+                    <div class="card" style="cursor: default;">
+                        <div class="text-muted text-small">Total Funcionalidades</div>
+                        <div style="font-size: 32px; font-weight: 600; color: var(--primary-color); margin-top: 8px;">
+                            <%= funcionalidades.length %>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="cursor: default;">
+                        <div class="text-muted text-small">Relaciones Activas</div>
+                        <div style="font-size: 32px; font-weight: 600; color: var(--primary-color); margin-top: 8px;">
+                            <%= estadisticas.total || 0 %>
+                        </div>
+                    </div>
+                    
+                    <% 
+                    const estadosComerciales = ['productivo', 'interesado', 'rechazado', 'en desarrollo', 'Propuesta enviada'];
+                    const estadosCount = {};
+                    estadisticas.por_estado.forEach(e => {
+                        estadosCount[e.estado_comercial] = e.cantidad;
+                    });
+                    estadosComerciales.forEach(estado => {
+                        const cantidad = estadosCount[estado] || 0;
+                        if (cantidad > 0) {
+                    %>
+                        <div class="card" style="cursor: default;">
+                            <div class="text-muted text-small"><%= estado.charAt(0).toUpperCase() + estado.slice(1) %></div>
+                            <div style="font-size: 32px; font-weight: 600; color: var(--primary-color); margin-top: 8px;">
+                                <%= cantidad %>
+                            </div>
+                        </div>
+                    <% 
+                        }
+                    });
+                    %>
                 </div>
-                
-                <!-- Top Funcionalidades -->
-                <% if (topFuncionalidades && topFuncionalidades.length > 0) { %>
-                    <div class="card" style="margin-top: 24px; cursor: default;">
-                        <h4 style="margin-bottom: 16px; font-size: 14px; font-weight: 600;">Funcionalidades Más Implementadas</h4>
-                        <div class="list-view" style="box-shadow: none;">
-                            <% topFuncionalidades.forEach((func, index) => { %>
-                                <div class="list-item" style="grid-template-columns: 40px 2fr 1fr 1fr; cursor: default;" onclick="event.stopPropagation()">
-                                    <div style="font-weight: 600; color: var(--primary-color); text-align: center;">
-                                        <%= index + 1 %>
-                                    </div>
-                                    <div class="item-title">
-                                        <div class="item-icon">
-                                            <%= func.titulo.substring(0, 1).toUpperCase() %>
-                                        </div>
-                                        <%= func.titulo %>
-                                    </div>
-                                    <div class="item-text"><%= func.seccion || '-' %></div>
-                                    <div>
-                                        <span class="item-badge">
-                                            <%= func.total_clientes %> cliente<%= func.total_clientes !== 1 ? 's' : '' %>
-                                        </span>
-                                        <span class="text-muted text-small" style="margin-left: 8px;">
-                                            (<%= func.implementados %> implementado<%= func.implementados !== 1 ? 's' : '' %>)
-                                        </span>
-                                    </div>
-                                </div>
-                            <% }) %>
-                        </div>
-                    </div>
-                <% } %>
             </div>
         </div>
     </div>
     
+    <!-- Modal Nuevo Cliente -->
+    <div id="modalNuevoCliente" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 500px; width: 90%; margin: auto; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">
+                <h2 style="font-size: 20px; font-weight: 500; margin: 0;">Nuevo Cliente</h2>
+                <button onclick="cerrarModalNuevoCliente()" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='none'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form onsubmit="crearCliente(event)" style="display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px;">
+                        Nombre del Cliente *
+                    </label>
+                    <input 
+                        type="text" 
+                        id="clienteNombre" 
+                        class="input" 
+                        required
+                        placeholder="Ej: Banco Nación"
+                        style="width: 100%; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif;"
+                    />
+                </div>
+                
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px;">
+                        Color *
+                    </label>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px;">
+                        <% 
+                        const coloresPasteles = [
+                            { hex: '#FFB3BA', name: 'Rosa' },
+                            { hex: '#FFDFBA', name: 'Melocotón' },
+                            { hex: '#FFFFBA', name: 'Amarillo' },
+                            { hex: '#BAFFC9', name: 'Verde' },
+                            { hex: '#BAE1FF', name: 'Azul' },
+                            { hex: '#E0BBE4', name: 'Lavanda' },
+                            { hex: '#FFCCCB', name: 'Coral' },
+                            { hex: '#B4E4FF', name: 'Cielo' },
+                            { hex: '#C7CEEA', name: 'Lila' },
+                            { hex: '#F0E6FF', name: 'Lavanda claro' },
+                            { hex: '#FFE5E5', name: 'Rosa claro' },
+                            { hex: '#E5F3FF', name: 'Azul claro' },
+                            { hex: '#E8F5E9', name: 'Verde claro' },
+                            { hex: '#FFF3E0', name: 'Naranja claro' },
+                            { hex: '#F3E5F5', name: 'Púrpura claro' },
+                            { hex: '#E0F2F1', name: 'Turquesa' },
+                            { hex: '#FFF9C4', name: 'Amarillo claro' },
+                            { hex: '#FCE4EC', name: 'Rosa suave' },
+                            { hex: '#E1F5FE', name: 'Cyan claro' },
+                            { hex: '#F1F8E9', name: 'Lima claro' }
+                        ];
+                        %>
+                        <% coloresPasteles.forEach((color, index) => { %>
+                            <label style="display: flex; flex-direction: column; align-items: center; cursor: pointer; padding: 8px; border-radius: 12px; border: 2px solid transparent; transition: all 0.2s;" 
+                                   onmouseover="this.style.borderColor='<%= color.hex %>'" 
+                                   onmouseout="if (!document.getElementById('color<%= index %>').checked) this.style.borderColor='transparent'">
+                                <input 
+                                    type="radio" 
+                                    name="clienteColor" 
+                                    id="color<%= index %>"
+                                    value="<%= color.hex %>"
+                                    <%= index === 0 ? 'checked' : '' %>
+                                    style="display: none;"
+                                />
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: <%= color.hex %>; border: 2px solid var(--border-color); margin-bottom: 4px; transition: all 0.2s;"
+                                     onclick="document.getElementById('color<%= index %>').checked = true; actualizarColorSeleccionado('<%= color.hex %>')"
+                                     onmouseover="this.style.transform='scale(1.1)'"
+                                     onmouseout="this.style.transform='scale(1)'"
+                                ></div>
+                                <span style="font-size: 10px; color: var(--text-secondary); text-align: center;"><%= color.name %></span>
+                            </label>
+                        <% }) %>
+                    </div>
+                    <input type="hidden" id="clienteColor" value="<%= coloresPasteles[0].hex %>" />
+                </div>
+                
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px;">
+                    <button type="button" class="btn" onclick="cerrarModalNuevoCliente()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Crear Cliente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script src="/js/main.js"></script>
+    <script>
+        function abrirModalNuevoCliente() {
+            document.getElementById('modalNuevoCliente').style.display = 'flex';
+        }
+        
+        function cerrarModalNuevoCliente() {
+            document.getElementById('modalNuevoCliente').style.display = 'none';
+            document.getElementById('clienteNombre').value = '';
+            // Resetear color al primero
+            document.getElementById('color0').checked = true;
+            document.getElementById('clienteColor').value = '<%= coloresPasteles[0].hex %>';
+        }
+        
+        function actualizarColorSeleccionado(hex) {
+            document.getElementById('clienteColor').value = hex;
+        }
+        
+        async function crearCliente(event) {
+            event.preventDefault();
+            
+            const nombre = document.getElementById('clienteNombre').value.trim();
+            const color = document.getElementById('clienteColor').value;
+            
+            if (!nombre) {
+                alert('El nombre del cliente es requerido');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/mapa/clientes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nombre, color })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ Cliente creado exitosamente');
+                    cerrarModalNuevoCliente();
+                    window.location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al crear el cliente');
+            }
+        }
+        
+        // Funciones para dropdown de estados
+        function mostrarDropdownEstado(event, clienteId, funcionalidadId, estadoActual) {
+            event.stopPropagation();
+            
+            // Cerrar otros dropdowns
+            document.querySelectorAll('[id^="dropdown-estado-"]').forEach(dropdown => {
+                if (dropdown.id !== `dropdown-estado-${clienteId}-${funcionalidadId}`) {
+                    dropdown.style.display = 'none';
+                }
+            });
+            
+            // Toggle del dropdown actual
+            const dropdown = document.getElementById(`dropdown-estado-${clienteId}-${funcionalidadId}`);
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        
+        async function seleccionarEstado(clienteId, funcionalidadId, estado) {
+            try {
+                const response = await fetch(`/mapa/estado/${clienteId}/${funcionalidadId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado_comercial: estado })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Cerrar dropdown
+                    document.getElementById(`dropdown-estado-${clienteId}-${funcionalidadId}`).style.display = 'none';
+                    // Recargar página
+                    window.location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al actualizar el estado');
+            }
+        }
+        
+        // Cerrar dropdowns al hacer clic fuera
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('[id^="dropdown-estado-"]') && !event.target.closest('.mapa-cell')) {
+                document.querySelectorAll('[id^="dropdown-estado-"]').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        });
+        
+        // Funcionalidad de resize de columnas
+        let isResizing = false;
+        let currentHeader = null;
+        let startX = 0;
+        let startWidth = 0;
+        
+        function iniciarResize(e, handle) {
+            isResizing = true;
+            currentHeader = handle.closest('th');
+            startX = e.pageX;
+            startWidth = currentHeader.offsetWidth;
+            
+            document.addEventListener('mousemove', doResize);
+            document.addEventListener('mouseup', stopResize);
+            
+            e.preventDefault();
+        }
+        
+        function doResize(e) {
+            if (!isResizing) return;
+            
+            const width = startWidth + (e.pageX - startX);
+            if (width >= 60) { // Mínimo 60px
+                currentHeader.style.width = width + 'px';
+            }
+        }
+        
+        function stopResize() {
+            isResizing = false;
+            document.removeEventListener('mousemove', doResize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+    </script>
 </body>
 </html>
 

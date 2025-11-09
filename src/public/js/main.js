@@ -32,23 +32,88 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Toggle filter dropdown
-function toggleFilterDropdown() {
-    const dropdown = document.getElementById('filterDropdown');
+// Toggle filter dropdowns
+function toggleFilterSecciones() {
+    const dropdown = document.getElementById('filterSecciones');
+    const sponsorsDropdown = document.getElementById('filterSponsors');
     if (dropdown) {
-        dropdown.classList.toggle('active');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+    if (sponsorsDropdown) {
+        sponsorsDropdown.style.display = 'none';
+    }
+}
+
+function toggleFilterSponsors() {
+    const dropdown = document.getElementById('filterSponsors');
+    const seccionesDropdown = document.getElementById('filterSecciones');
+    if (dropdown) {
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+    if (seccionesDropdown) {
+        seccionesDropdown.style.display = 'none';
+    }
+}
+
+// Aplicar filtros con selección múltiple
+function aplicarFiltros() {
+    const seccionesSeleccionadas = Array.from(document.querySelectorAll('.filter-checkbox-seccion:checked')).map(cb => cb.value);
+    const sponsorsSeleccionados = Array.from(document.querySelectorAll('.filter-checkbox-sponsor:checked')).map(cb => cb.value);
+    
+    const params = new URLSearchParams(window.location.search);
+    
+    // Limpiar filtros anteriores
+    params.delete('secciones');
+    params.delete('sponsors');
+    
+    // Agregar nuevos filtros
+    if (seccionesSeleccionadas.length > 0) {
+        seccionesSeleccionadas.forEach(seccion => {
+            params.append('secciones', seccion);
+        });
     }
     
-    // Cerrar al hacer clic fuera
-    document.addEventListener('click', function closeDropdown(e) {
-        if (!e.target.closest('.filter-btn') && !e.target.closest('.filter-dropdown')) {
-            if (dropdown) {
-                dropdown.classList.remove('active');
-            }
-            document.removeEventListener('click', closeDropdown);
-        }
-    });
+    if (sponsorsSeleccionados.length > 0) {
+        sponsorsSeleccionados.forEach(sponsor => {
+            params.append('sponsors', sponsor);
+        });
+    }
+    
+    window.location.search = params.toString();
 }
+
+function removerFiltroSeccion(seccion) {
+    const params = new URLSearchParams(window.location.search);
+    const secciones = params.getAll('secciones').filter(s => s !== seccion);
+    params.delete('secciones');
+    secciones.forEach(s => params.append('secciones', s));
+    window.location.search = params.toString();
+}
+
+function removerFiltroSponsor(sponsor) {
+    const params = new URLSearchParams(window.location.search);
+    const sponsors = params.getAll('sponsors').filter(s => s !== sponsor);
+    params.delete('sponsors');
+    sponsors.forEach(s => params.append('sponsors', s));
+    window.location.search = params.toString();
+}
+
+function limpiarFiltros() {
+    const params = new URLSearchParams(window.location.search);
+    params.delete('secciones');
+    params.delete('sponsors');
+    window.location.search = params.toString();
+}
+
+// Cerrar dropdowns al hacer clic fuera
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.filter-btn') && !e.target.closest('.filter-dropdown')) {
+        const seccionesDropdown = document.getElementById('filterSecciones');
+        const sponsorsDropdown = document.getElementById('filterSponsors');
+        if (seccionesDropdown) seccionesDropdown.style.display = 'none';
+        if (sponsorsDropdown) sponsorsDropdown.style.display = 'none';
+    }
+});
 
 // Cambiar vista (lista/tarjetas)
 function cambiarVista(vista) {
@@ -65,6 +130,28 @@ function buscar(event) {
         const params = new URLSearchParams(window.location.search);
         params.set('busqueda', searchInput.value);
         window.location.search = params.toString();
+    }
+}
+
+// Búsqueda en Score
+function buscarScore(event) {
+    if (event) event.preventDefault();
+    const searchInput = document.getElementById('searchScoreInput');
+    if (searchInput) {
+        const searchTerm = searchInput.value.toLowerCase();
+        // Buscar en las tarjetas de score
+        const cards = document.querySelectorAll('[style*="grid-template-columns"] > div');
+        cards.forEach(card => {
+            const title = card.querySelector('h3, .item-title, div[style*="font-weight"]');
+            if (title) {
+                const text = title.textContent.toLowerCase();
+                if (text.includes(searchTerm) || searchTerm === '') {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            }
+        });
     }
 }
 
@@ -145,6 +232,53 @@ function verDetalle(id) {
     window.location.href = `/funcionalidades/${id}`;
 }
 
+// Sincronizar con Redmine
+async function sincronizarRedmine() {
+    const button = document.getElementById('syncButton');
+    if (!button) return;
+    
+    // Deshabilitar botón y mostrar loading
+    button.disabled = true;
+    button.style.opacity = '0.6';
+    button.style.cursor = 'not-allowed';
+    
+    const originalTitle = button.title;
+    button.title = 'Sincronizando...';
+    
+    try {
+        const response = await fetch('/api/redmine/sincronizar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                project_id: 'ut-bancor',
+                tracker_id: '19', // Filtrar solo Epics
+                max_total: null // Sin límite para sincronización manual
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`✅ Sincronización completada:\n- ${data.issues_insertados || 0} issues insertados\n- ${data.issues_actualizados || 0} issues actualizados\n- ${data.funcionalidades_creadas || 0} funcionalidades creadas`);
+            // Recargar la página para ver los cambios
+            window.location.reload();
+        } else {
+            alert('❌ Error en la sincronización: ' + (data.error || 'Error desconocido'));
+        }
+    } catch (error) {
+        console.error('Error al sincronizar:', error);
+        alert('❌ Error al sincronizar: ' + error.message);
+    } finally {
+        // Restaurar botón
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.title = originalTitle;
+    }
+}
+
 // Eliminar funcionalidad
 async function eliminarFuncionalidad(id) {
     if (!confirm('¿Estás seguro de eliminar esta funcionalidad?')) {
@@ -175,11 +309,10 @@ class ScoreCalculator {
     constructor() {
         this.criterios = {};
         this.pesos = {
-            origen: 40,
-            facturacion: 20,
+            facturacion: 40,
             urgencia: 20,
             facturacion_potencial: 20,
-            impacto_cliente: 33.33,
+            impacto_cliente: 20,
             esfuerzo: 33.33,
             incertidumbre: 33.33,
             riesgo: 33.33
@@ -208,12 +341,25 @@ class ScoreCalculator {
     }
     
     calcularScore() {
-        let score = 0;
+        // Criterios positivos (suman)
+        const criteriosPositivos = ['facturacion', 'urgencia', 'facturacion_potencial', 'impacto_cliente'];
+        const criteriosNegativos = ['esfuerzo', 'incertidumbre', 'riesgo'];
+        
+        let positivos = 0;
+        let negativos = 0;
         
         for (const [key, value] of Object.entries(this.criterios)) {
             const peso = this.pesos[key] || 0;
-            score += (value * peso / 100);
+            const contribucion = (value * peso / 100);
+            
+            if (criteriosPositivos.includes(key)) {
+                positivos += contribucion;
+            } else if (criteriosNegativos.includes(key)) {
+                negativos += contribucion;
+            }
         }
+        
+        const score = positivos - negativos;
         
         // Actualizar display del score
         const scoreDisplay = document.getElementById('scoreTotal');
@@ -253,10 +399,11 @@ class ScoreCalculator {
 class MapaClientes {
     constructor() {
         this.estadosComerciales = [
-            'En Desarrollo',
-            'Implementado',
-            'Planificado',
-            'Cancelado'
+            'productivo',
+            'interesado',
+            'rechazado',
+            'en desarrollo',
+            'Propuesta enviada'
         ];
     }
     
@@ -424,12 +571,12 @@ function mostrarSugerencias(query) {
     
     // Generar HTML de sugerencias
     const html = filtradas.map(func => `
-        <div class="suggestion-item" onclick="verDetalle(${func.id})">
+        <div class="suggestion-item" onclick="verDetalle(${func.redmine_id || func.id})">
             <div class="suggestion-icon">
-                ${func.titulo.substring(0, 1).toUpperCase()}
+                ${(func.titulo || '?').substring(0, 1).toUpperCase()}
             </div>
             <div class="suggestion-text">
-                <div class="suggestion-title">${func.titulo}</div>
+                <div class="suggestion-title">${func.titulo || 'Sin título'}</div>
                 <div class="suggestion-subtitle">
                     ${func.seccion || 'Sin sección'} ${func.sponsor ? '• ' + func.sponsor : ''}
                 </div>
