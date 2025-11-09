@@ -398,6 +398,18 @@
                 textarea.style.height = 'auto';
                 textarea.style.height = '44px';
             }
+            
+            // Expandir sidebar por defecto en funcionalidades
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.sidebar-toggle');
+            if (sidebar && sidebar.classList.contains('collapsed')) {
+                sidebar.classList.remove('collapsed');
+                if (toggle) {
+                    toggle.style.left = 'calc(var(--sidebar-width) - 16px)';
+                }
+                // Actualizar localStorage para mantener el estado expandido
+                localStorage.setItem('sidebarCollapsed', 'false');
+            }
         });
     </script>
 </body>

@@ -199,8 +199,8 @@
                             <div class="glue-card__content" style="font-size: 16px; color: #202124; margin-bottom: 24px; font-family: 'Google Sans', 'Roboto', sans-serif; font-weight: 500;">
                                 Funcionalidades Productivas
                             </div>
-                            <div id="productivasChartContainer" style="height: 300px; position: relative; width: 100%;">
-                                <svg id="productivasChart" width="100%" height="100%" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid meet" style="overflow: visible;">
+                            <div id="productivasChartContainer" style="height: 300px; position: relative; width: 100%; overflow: visible;">
+                                <svg id="productivasChart" width="100%" height="100%" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet" style="overflow: visible;">
                                     <!-- Gráfico de barras por cliente se dibuja con JavaScript -->
                                 </svg>
                             </div>
@@ -385,20 +385,26 @@
                     // Dibujar gráfico de funcionalidades productivas por cliente
                     function dibujarGraficoProductivas() {
                         const svg = document.getElementById('productivasChart');
-                        if (!svg || productivasPorCliente.length === 0) return;
+                        const container = document.getElementById('productivasChartContainer');
+                        if (!svg || !container || productivasPorCliente.length === 0) return;
                         
-                        // Usar el ancho completo del contenedor SVG
-                        const svgElement = svg;
-                        const width = svgElement.clientWidth || 500;
+                        // Obtener el ancho real del contenedor
+                        const containerWidth = container.offsetWidth || container.clientWidth || 800;
+                        const width = containerWidth;
                         const height = 300;
-                        const margin = { top: 20, right: 20, bottom: 60, left: 40 }; // Reducido margen izquierdo
+                        const margin = { top: 20, right: 40, bottom: 60, left: 50 }; // Márgenes ajustados
                         const chartWidth = width - margin.left - margin.right;
                         const chartHeight = height - margin.top - margin.bottom;
-                        // Aumentar el espaciado entre barras usando un factor de espaciado
-                        const spacingFactor = 1.2; // Factor para aumentar el espacio entre barras
-                        const totalSpacing = chartWidth * spacingFactor;
-                        const barSpacing = totalSpacing / productivasPorCliente.length;
-                        const barWidth = barSpacing * 0.4; // Barras más estrechas para más espacio
+                        
+                        // Actualizar viewBox para usar todo el ancho
+                        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                        
+                        // Calcular espaciado para usar todo el ancho disponible
+                        // Usar el 95% del ancho disponible para las barras
+                        const anchoDisponible = chartWidth * 0.95;
+                        // Aumentar el espaciado entre barras multiplicando por un factor
+                        const barSpacing = (anchoDisponible / productivasPorCliente.length) * 1.3;
+                        const barWidth = barSpacing * 0.6; // Mantener el mismo ancho relativo de barras
                         
                         // Limpiar SVG
                         svg.innerHTML = '';
@@ -406,15 +412,20 @@
                         // Color suave para las barras
                         const barColor = 'rgba(52, 168, 83, 0.5)'; // Verde suave
                         
+                        // Calcular el ancho real del área de dibujo basado en la última barra
+                        const inicioBarras = margin.left + (chartWidth - anchoDisponible) / 2;
+                        const ultimaBarraX = inicioBarras + (barSpacing * (productivasPorCliente.length - 1)) + barWidth;
+                        const anchoRealGrafico = ultimaBarraX - inicioBarras;
+                        
                         // Eje Y (líneas de referencia)
                         for (let i = 0; i <= 5; i++) {
                             const y = margin.top + chartHeight - (chartHeight / 5) * i;
                             const value = Math.round((maxProductivas / 5) * i);
                             
-                            // Línea de referencia
+                            // Línea de referencia - llegar hasta la última barra
                             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                            line.setAttribute('x1', margin.left);
-                            line.setAttribute('x2', width - margin.right);
+                            line.setAttribute('x1', inicioBarras);
+                            line.setAttribute('x2', inicioBarras + anchoRealGrafico);
                             line.setAttribute('y1', y);
                             line.setAttribute('y2', y);
                             line.setAttribute('stroke', '#e8eaed');
@@ -436,8 +447,8 @@
                         // Barras
                         productivasPorCliente.forEach((cliente, index) => {
                             const barHeight = (cliente.cantidad_productivas / maxProductivas) * chartHeight;
-                            // Centrar las barras en el espacio disponible, dejando más espacio entre ellas
-                            const x = margin.left + (barSpacing * index) + (barSpacing - barWidth) / 2;
+                            // Distribuir las barras en el ancho disponible, centradas
+                            const x = inicioBarras + (barSpacing * index) + (barSpacing - barWidth) / 2;
                             const y = margin.top + chartHeight - barHeight;
                             
                             // Barra
@@ -469,7 +480,17 @@
                     // Inicializar gráficos cuando el DOM esté listo
                     document.addEventListener('DOMContentLoaded', () => {
                         dibujarGraficoBarras();
-                        dibujarGraficoProductivas();
+                        // Esperar un momento para que el contenedor tenga su ancho real
+                        setTimeout(() => {
+                            dibujarGraficoProductivas();
+                        }, 100);
+                        
+                        // Redibujar al cambiar el tamaño de la ventana
+                        window.addEventListener('resize', () => {
+                            setTimeout(() => {
+                                dibujarGraficoProductivas();
+                            }, 100);
+                        });
                     });
                 </script>
             </div>
@@ -760,6 +781,23 @@
         // Inicializar drag and drop cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', () => {
             inicializarDragAndDrop();
+            
+            // Prevenir que el sidebar se contraiga/expanda durante la carga en mapa
+            // Esperar a que main.js termine de inicializar el sidebar y luego mantener el estado
+            setTimeout(() => {
+                const sidebar = document.getElementById('sidebar');
+                const toggle = document.querySelector('.sidebar-toggle');
+                if (sidebar && toggle) {
+                    // Capturar el estado después de que main.js haya inicializado
+                    const estadoFinal = sidebar.classList.contains('collapsed');
+                    // Asegurar que el toggle esté en la posición correcta
+                    if (estadoFinal) {
+                        toggle.style.left = '48px';
+                    } else {
+                        toggle.style.left = 'calc(var(--sidebar-width) - 16px)';
+                    }
+                }
+            }, 300);
         });
         
         // Funcionalidad de resize de columnas
