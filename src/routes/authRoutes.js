@@ -20,7 +20,7 @@ router.get('/', (req, res) => {
 /**
  * Procesar login
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
     const { password } = req.body;
     
     if (password === HARDCODED_PASSWORD) {
@@ -37,29 +37,34 @@ router.post('/', (req, res) => {
         }
         
         // Guardar sesión explícitamente antes de redirigir
-        // Esto es crítico en serverless donde cada request puede ir a una instancia diferente
-        req.session.save((err) => {
-            if (err) {
-                console.error('❌ Error al guardar sesión:', err);
-                return res.render('pages/login', {
-                    title: 'Login - Catálogo',
-                    error: 'Error al iniciar sesión. Por favor, intente nuevamente.'
+        // Usar promesa para asegurar que se guarde completamente
+        try {
+            await new Promise((resolve, reject) => {
+                req.session.save((err) => {
+                    if (err) reject(err);
+                    else resolve();
                 });
-            }
+            });
             
             // Verificar que la sesión se guardó correctamente
             if (process.env.DEBUG_SESSIONS === 'true' || process.env.NODE_ENV === 'production') {
                 console.log('✅ Sesión guardada exitosamente:', {
                     sessionId: req.sessionID,
                     authenticated: req.session.authenticated,
-                    cookie: req.headers.cookie
+                    cookie: req.headers.cookie,
+                    setCookieHeader: res.getHeader('Set-Cookie')
                 });
             }
             
             // Redirigir después de guardar
-            // La cookie se enviará automáticamente en el siguiente request
             res.redirect('/funcionalidades');
-        });
+        } catch (err) {
+            console.error('❌ Error al guardar sesión:', err);
+            res.render('pages/login', {
+                title: 'Login - Catálogo',
+                error: 'Error al iniciar sesión. Por favor, intente nuevamente.'
+            });
+        }
     } else {
         if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_SESSIONS === 'true') {
             console.log('❌ Login fallido - Contraseña incorrecta');

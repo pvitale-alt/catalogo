@@ -40,7 +40,7 @@ app.use(session({
         sameSite: 'lax', // Compatible con Vercel y navegadores modernos
         maxAge: 24 * 60 * 60 * 1000, // 24 horas
         // En Vercel, no especificar dominio para que funcione en todos los subdominios
-        domain: undefined
+        // Dejar que Express lo maneje automáticamente
     },
     name: 'catalogo.sid' // Nombre personalizado para la cookie
 }));
@@ -66,7 +66,10 @@ const requireAuth = (req, res, next) => {
             authenticated: req.session?.authenticated,
             sessionId: req.sessionID,
             cookie: req.headers.cookie,
-            sessionKeys: req.session ? Object.keys(req.session) : []
+            sessionKeys: req.session ? Object.keys(req.session) : [],
+            // AGREGAR ESTO:
+            allCookies: req.cookies,
+            setCookieHeader: res.getHeader('Set-Cookie')
         });
     }
     
