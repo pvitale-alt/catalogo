@@ -15,15 +15,25 @@ const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
 const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
 
+// Configurar store de sesiones con manejo de errores
+const sessionStore = new pgSession({
+    pool: pool, // Usar el pool de conexiones existente
+    tableName: 'session', // Nombre de la tabla en PostgreSQL
+    createTableIfMissing: true, // Crear tabla automáticamente si no existe
+    pruneSessionInterval: 60 // Limpiar sesiones expiradas cada 60 segundos
+});
+
+// Manejar errores del store
+sessionStore.on('error', (error) => {
+    console.error('❌ Error en store de sesiones:', error);
+});
+
 app.use(session({
-    store: new pgSession({
-        pool: pool, // Usar el pool de conexiones existente
-        tableName: 'session', // Nombre de la tabla en PostgreSQL
-        createTableIfMissing: true // Crear tabla automáticamente si no existe
-    }),
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || 'catalogo-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
+    rolling: true, // Renovar cookie en cada request
     cookie: {
         secure: isProduction || isVercel, // HTTPS en producción/Vercel
         httpOnly: true,
@@ -48,24 +58,33 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Middleware de autenticación
 const requireAuth = (req, res, next) => {
-    // Log para debug (solo si está habilitado)
-    if (process.env.DEBUG_SESSIONS === 'true') {
+    // Log detallado para debug
+    if (process.env.DEBUG_SESSIONS === 'true' || process.env.NODE_ENV === 'production') {
         console.log('🔐 Verificando autenticación:', {
             path: req.path,
             hasSession: !!req.session,
             authenticated: req.session?.authenticated,
             sessionId: req.sessionID,
-            cookie: req.headers.cookie
+            cookie: req.headers.cookie,
+            sessionKeys: req.session ? Object.keys(req.session) : []
         });
     }
     
-    if (req.session && req.session.authenticated) {
+    // Verificar si la sesión existe y está autenticada
+    if (req.session && req.session.authenticated === true) {
+        if (process.env.DEBUG_SESSIONS === 'true') {
+            console.log('✅ Autenticación válida - Continuando');
+        }
         return next();
     }
     
     // Log si no está autenticado
-    if (process.env.DEBUG_SESSIONS === 'true') {
-        console.log('❌ No autenticado - Redirigiendo a /login');
+    if (process.env.DEBUG_SESSIONS === 'true' || process.env.NODE_ENV === 'production') {
+        console.log('❌ No autenticado - Redirigiendo a /login', {
+            hasSession: !!req.session,
+            authenticated: req.session?.authenticated,
+            sessionId: req.sessionID
+        });
     }
     
     res.redirect('/login');

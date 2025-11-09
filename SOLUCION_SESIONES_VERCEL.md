@@ -149,11 +149,46 @@ Si el problema persiste después de configurar `SESSION_SECRET`:
 - **Cookie name**: `catalogo.sid` para evitar conflictos
 - **Limpieza**: Las sesiones expiradas se limpian automáticamente por `connect-pg-simple`
 
+## Problema: "authenticated undefined" después de login exitoso
+
+Si ves en los logs:
+- ✅ Login exitoso (200)
+- ❌ "authenticated undefined" en el siguiente request
+
+**Causa:** La sesión se guarda pero no se está recuperando correctamente del store de PostgreSQL en el siguiente request.
+
+**Soluciones:**
+
+1. **Verificar que la tabla `session` existe en PostgreSQL:**
+   - Ve a tu base de datos en Neon
+   - Verifica que existe la tabla `session`
+   - Si no existe, el store la creará automáticamente en el primer uso
+
+2. **Verificar que `DATABASE_URL` está correctamente configurada:**
+   - En Vercel, verifica que `DATABASE_URL` apunta a tu base de datos
+   - Debe tener el formato: `postgresql://user:password@host/database?sslmode=require`
+
+3. **Habilitar debug temporal:**
+   - Agregar `DEBUG_SESSIONS=true` en Vercel
+   - Hacer redeploy
+   - Revisar logs para ver:
+     - Si la sesión se guarda correctamente
+     - Si la cookie se envía en el siguiente request
+     - Si hay errores en el store
+
+4. **Verificar logs de Vercel:**
+   - Buscar errores relacionados con PostgreSQL
+   - Verificar que no hay problemas de conexión a la base de datos
+   - Revisar si hay errores en el store de sesiones
+
 ## Si Aún No Funciona
 
 1. Verificar que `SESSION_SECRET` esté configurado correctamente
-2. Verificar que las cookies no estén bloqueadas en el navegador
-3. Probar en modo incógnito
-4. Revisar la consola del navegador (F12) para errores de cookies
-5. Revisar logs de Vercel para errores específicos
+2. Verificar que `DATABASE_URL` esté configurada y sea accesible
+3. Verificar que la tabla `session` existe en PostgreSQL
+4. Verificar que las cookies no estén bloqueadas en el navegador
+5. Probar en modo incógnito
+6. Revisar la consola del navegador (F12) para errores de cookies
+7. Revisar logs de Vercel para errores específicos del store
+8. Verificar que `connect-pg-simple` esté instalado correctamente
 
