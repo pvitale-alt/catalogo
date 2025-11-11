@@ -14,15 +14,13 @@ if (!LOGIN_PASSWORD) {
         // En producción, no usar fallback - el login fallará hasta que se configure
         process.exit(1);
     } else {
-        // Solo en desarrollo local, usar fallback con advertencia
+        // Solo en desarrollo local, mostrar advertencia
         console.warn('⚠️ ADVERTENCIA: LOGIN_PASSWORD no está configurada');
-        console.warn('   Usando contraseña por defecto (solo para desarrollo local)');
-        console.warn('   Configura LOGIN_PASSWORD en tu archivo .env para mayor seguridad');
+        console.warn('   El login NO funcionará hasta que configures LOGIN_PASSWORD en tu archivo .env');
+        console.warn('   Crea un archivo .env en la raíz del proyecto con: LOGIN_PASSWORD=tu_contraseña');
     }
 }
 
-// Fallback solo para desarrollo local (nunca en producción)
-const ACTUAL_PASSWORD = LOGIN_PASSWORD || 'MPmercap767';
 
 /**
  * Renderizar página de login
@@ -51,7 +49,16 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
     const { password } = req.body;
     
-    if (password === ACTUAL_PASSWORD) {
+    // Validar que LOGIN_PASSWORD esté configurada antes de comparar
+    if (!LOGIN_PASSWORD) {
+        console.error('❌ LOGIN_PASSWORD no está configurada');
+        return res.render('pages/login', {
+            title: 'Login - Catálogo',
+            error: 'Error de configuración del servidor. Contacte al administrador.'
+        });
+    }
+    
+    if (password === LOGIN_PASSWORD) {
         // Generar token JWT
         const token = generateToken();
         
