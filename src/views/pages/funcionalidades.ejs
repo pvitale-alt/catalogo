@@ -80,40 +80,42 @@
                 </div>
                 
                 <div class="toolbar-right" style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: center;">
-                    <!-- Buscador estilo Google -->
-                    <div style="position: relative; max-width: 600px; width: 100%; margin: 0 auto;">
-                        <form onsubmit="buscar(event)" class="google-search-box" style="position: relative;">
-                            <div style="display: flex; align-items: center; background: white; border: 1px solid #dfe1e5; border-radius: 24px; padding: 0 16px; height: 44px; box-shadow: 0 2px 5px 1px rgba(64,60,67,.16); transition: all 0.2s;" id="searchBoxContainer">
-                                <svg style="width: 20px; height: 20px; color: #9aa0a6; margin-right: 12px; flex-shrink: 0;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                                </svg>
-                                <textarea 
-                                    id="searchInput" 
-                                    class="google-search-input"
-                                    rows="1"
-                                    placeholder="Buscar funcionalidades..."
-                                    autocomplete="off"
-                                    autocapitalize="off"
-                                    autocorrect="off"
-                                    spellcheck="false"
-                                    style="flex: 1; border: none; outline: none; font-size: 16px; font-family: 'Google Sans', 'Roboto', sans-serif; resize: none; overflow: hidden; padding: 0; margin: 0; background: transparent; line-height: 44px; max-height: 44px;"
-                                    oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight, 44)+'px'; buscarSugerencias(this.value);"
-                                    onfocus="document.getElementById('searchBoxContainer').style.boxShadow='0 2px 8px 1px rgba(64,60,67,.24)'; document.getElementById('searchBoxContainer').style.borderColor='transparent';"
-                                    onblur="setTimeout(() => { document.getElementById('searchBoxContainer').style.boxShadow='0 2px 5px 1px rgba(64,60,67,.16)'; document.getElementById('searchBoxContainer').style.borderColor='#dfe1e5'; }, 200);"
-                                ><%= typeof filtros !== 'undefined' && filtros.busqueda ? filtros.busqueda : '' %></textarea>
-                            </div>
-                            <!-- Sugerencias -->
-                            <div id="searchSuggestions" class="google-search-suggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #dfe1e5; border-radius: 0 0 24px 24px; box-shadow: 0 4px 6px rgba(32,33,36,.28); margin-top: -1px; z-index: 1000; max-height: 400px; overflow-y: auto;">
-                            </div>
-                        </form>
+                    <!-- Buscador estilo Google con botón de sincronización -->
+                    <div style="display: flex; align-items: center; gap: 8px; max-width: 600px; width: 100%; margin: 0 auto;">
+                        <div style="position: relative; flex: 1;">
+                            <form onsubmit="buscar(event)" class="google-search-box" style="position: relative;">
+                                <div style="display: flex; align-items: center; background: white; border: 1px solid #dfe1e5; border-radius: 24px; padding: 0 16px; height: 44px; box-shadow: 0 2px 5px 1px rgba(64,60,67,.16); transition: all 0.2s;" id="searchBoxContainer">
+                                    <svg style="width: 20px; height: 20px; color: #9aa0a6; margin-right: 12px; flex-shrink: 0;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                                    </svg>
+                                    <textarea 
+                                        id="searchInput" 
+                                        class="google-search-input"
+                                        rows="1"
+                                        placeholder="Buscar funcionalidades..."
+                                        autocomplete="off"
+                                        autocapitalize="off"
+                                        autocorrect="off"
+                                        spellcheck="false"
+                                        style="flex: 1; border: none; outline: none; font-size: 16px; font-family: 'Google Sans', 'Roboto', sans-serif; resize: none; overflow: hidden; padding: 0; margin: 0; background: transparent; line-height: 44px; max-height: 44px;"
+                                        oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight, 44)+'px'; buscarSugerencias(this.value);"
+                                        onfocus="document.getElementById('searchBoxContainer').style.boxShadow='0 2px 8px 1px rgba(64,60,67,.24)'; document.getElementById('searchBoxContainer').style.borderColor='transparent';"
+                                        onblur="setTimeout(() => { document.getElementById('searchBoxContainer').style.boxShadow='0 2px 5px 1px rgba(64,60,67,.16)'; document.getElementById('searchBoxContainer').style.borderColor='#dfe1e5'; }, 200);"
+                                    ><%= typeof filtros !== 'undefined' && filtros.busqueda ? filtros.busqueda : '' %></textarea>
+                                </div>
+                                <!-- Sugerencias -->
+                                <div id="searchSuggestions" class="google-search-suggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #dfe1e5; border-radius: 0 0 24px 24px; box-shadow: 0 4px 6px rgba(32,33,36,.28); margin-top: -1px; z-index: 1000; max-height: 400px; overflow-y: auto;">
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Botón de sincronización (solo admin puede usar) -->
+                        <button class="icon-button" onclick="<%= isAdmin ? 'sincronizarRedmine()' : 'alert(\'Solo administradores pueden sincronizar con Redmine\')' %>" title="<%= isAdmin ? 'Sincronizar con Redmine' : 'Solo administradores pueden sincronizar' %>" id="syncButton" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; border: none; background: <%= isAdmin ? '#316ba1' : '#9aa0a6' %>; cursor: <%= isAdmin ? 'pointer' : 'not-allowed' %>; transition: all 0.2s; flex-shrink: 0;<%= isAdmin ? '' : ' opacity: 0.5;' %>" onmouseover="<%= isAdmin ? 'this.style.background=\'#2a5a8a\'' : '' %>" onmouseout="<%= isAdmin ? 'this.style.background=\'#316ba1\'' : '' %>">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color: white;">
+                                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.81 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                            </svg>
+                        </button>
                     </div>
-                    
-                    <!-- Botón de sincronización -->
-                    <button class="icon-button" onclick="sincronizarRedmine()" title="Sincronizar con Redmine" id="syncButton" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #dfe1e5; background: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='white'">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color: #5f6368;">
-                            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.81 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                        </svg>
-                    </button>
                     
                     <div class="view-toggle">
                         <button class="view-btn <%= vista === 'lista' ? 'active' : '' %>" onclick="cambiarVista('lista')" title="Vista de lista">
@@ -200,16 +202,11 @@
                                     <path d="M7 10l5 5 5-5z"/>
                                 </svg>
                             </div>
-                            <div onclick="ordenar('monto')" style="cursor: pointer;" class="desktop-only" id="montoHeader" data-sort="monto">
-                                Monto
+                            <div onclick="ordenar('fecha_creacion')" style="cursor: pointer;" class="desktop-only" id="fechaCreacionHeader" data-sort="fecha_creacion">
+                                Fecha Creación
                                 <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M7 10l5 5 5-5z"/>
                                 </svg>
-                                <button class="icon-button toggle-monto-btn" onclick="event.stopPropagation(); toggleMontos()" title="Ocultar/Mostrar montos" style="margin-left: 8px;">
-                                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
-                                    </svg>
-                                </button>
                             </div>
                             <div onclick="ordenar('epic_redmine')" style="cursor: pointer;" class="desktop-only" data-sort="epic_redmine">
                                 Epic Redmine
@@ -240,11 +237,11 @@
                                         <% } %>
                                     </div>
                                 </div>
-                                <div class="item-text"><%= func.seccion || '-' %></div>
-                                <div class="item-text"><%= func.sponsor || '-' %></div>
-                                <div class="item-text desktop-only monto-valor">
-                                    <% if (func.monto) { %>
-                                        USD$ <%= new Intl.NumberFormat('es-AR').format(func.monto) %>
+                                <div class="item-text"><%= (func.seccion || '-').trim() %></div>
+                                <div class="item-text sponsor-cell"><%= (func.sponsor || '-').trim() %></div>
+                                <div class="item-text desktop-only">
+                                    <% if (func.fecha_creacion) { %>
+                                        <%= new Date(func.fecha_creacion).toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' }) %>
                                     <% } else { %>
                                         -
                                     <% } %>

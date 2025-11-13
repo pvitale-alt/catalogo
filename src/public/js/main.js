@@ -559,16 +559,32 @@ class MapaClientes {
         const claseEstado = this.getClaseEstado(estado);
         cell.classList.add(claseEstado);
         
+        // Capitalizar estado para mostrar
+        let textoMostrar = '';
+        if (!estado) {
+            textoMostrar = '+';
+        } else if (estado === 'Propuesta enviada') {
+            textoMostrar = 'Propuesta<br>enviada';
+            cell.innerHTML = textoMostrar;
+            return;
+        } else if (estado === 'en desarrollo') {
+            textoMostrar = 'En desarrollo';
+        } else {
+            textoMostrar = estado.charAt(0).toUpperCase() + estado.slice(1);
+        }
+        
         // Actualizar texto
-        cell.textContent = estado;
+        cell.textContent = textoMostrar;
     }
     
     getClaseEstado(estado) {
+        // Mapear estados en minúsculas (como vienen de la BD) a clases CSS
         const map = {
-            'Implementado': 'estado-implementado',
-            'En Desarrollo': 'estado-desarrollo',
-            'Planificado': 'estado-planificado',
-            'Cancelado': 'estado-cancelado'
+            'productivo': 'estado-implementado',
+            'en desarrollo': 'estado-desarrollo',
+            'interesado': 'estado-planificado',
+            'rechazado': 'estado-cancelado',
+            'Propuesta enviada': 'estado-planificado'
         };
         return map[estado] || '';
     }

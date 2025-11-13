@@ -173,9 +173,10 @@
                             </div>
                         </div>
                         
+                        <% if (isAdmin) { %>
                         <div>
                             <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
-                                Monto
+                                Monto <span style="font-size: 11px; color: #999;">(Solo Admin)</span>
                             </div>
                             <div id="montoView" style="display: flex; align-items: center; gap: 8px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
@@ -207,6 +208,7 @@
                                 </div>
                             </div>
                         </div>
+                        <% } %>
                     </div>
                     
                     <!-- Productivo en (Solo lectura - consulta desde BD) -->

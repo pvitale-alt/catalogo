@@ -81,7 +81,15 @@
                                         let textoEstado = '-';
                                         
                                         if (estado) {
-                                            textoEstado = estado;
+                                            // Capitalizar estado comercial para mostrar
+                                            if (estado === 'Propuesta enviada') {
+                                                textoEstado = 'Propuesta enviada';
+                                            } else if (estado === 'en desarrollo') {
+                                                textoEstado = 'En desarrollo';
+                                            } else {
+                                                textoEstado = estado.charAt(0).toUpperCase() + estado.slice(1);
+                                            }
+                                            
                                             if (estado === 'productivo') claseEstado = 'estado-implementado';
                                             else if (estado === 'en desarrollo') claseEstado = 'estado-desarrollo';
                                             else if (estado === 'interesado') claseEstado = 'estado-planificado';

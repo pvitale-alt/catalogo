@@ -1,7 +1,11 @@
 // Servicio para consumir datos de Redmine vía Google Apps Script
+// ⚠️ NOTA: Este servicio NO se está usando actualmente
+// El sistema usa redmineDirectService.js que llama directamente a la API de Redmine
+// Este archivo se mantiene por si se necesita en el futuro, pero no requiere configuración
+
 const { OAuth2Client } = require('google-auth-library');
 
-const REDMINE_API_URL = process.env.REDMINE_API_URL || 'https://script.google.com/a/macros/mercapsoftware.com/s/AKfycbyytfFwZl3xz428-23NdG2nFc2IyGT3qG-hHwpbeY4yAMBVggaFL5df1b9_CfGgPGJF/exec';
+const REDMINE_API_URL = process.env.REDMINE_API_URL; // Opcional - solo necesario si se usa este servicio
 
 let oauth2Client = null;
 let accessToken = null;
@@ -75,8 +79,13 @@ async function obtenerAccessToken() {
  * @returns {Promise<Object>} - Datos de Redmine
  */
 async function obtenerIssues(options = {}) {
+    // ⚠️ Este servicio NO se está usando actualmente
+    if (!REDMINE_API_URL) {
+        throw new Error('❌ REDMINE_API_URL no está configurado. Este servicio requiere Google Apps Script y actualmente NO se está usando. El sistema usa redmineDirectService.js en su lugar.');
+    }
+    
     const {
-        project_id = 'ut-bancor',
+        project_id = process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor',
         status_id = '*',
         limit = 300,
         format = 'json_full'
@@ -186,7 +195,7 @@ function mapearIssueAFuncionalidad(issue) {
  * @param {string} project_id - ID del proyecto
  * @returns {Promise<Object>} - Resultado de la sincronización
  */
-async function sincronizarConCatalogo(project_id = 'ut-bancor') {
+async function sincronizarConCatalogo(project_id = process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor') {
     try {
         const data = await obtenerIssues({ project_id, format: 'json_full' });
         const issues = data.issues || [];
@@ -212,8 +221,9 @@ async function sincronizarConCatalogo(project_id = 'ut-bancor') {
  */
 async function obtenerProyectos() {
     // TODO: Implementar endpoint en Google Apps Script para listar proyectos
+    const defaultProject = process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor';
     return [
-        { id: 'ut-bancor', name: 'UT Bancor' },
+        { id: defaultProject, name: `Proyecto ${defaultProject}` },
         // Agregar más proyectos según necesidad
     ];
 }

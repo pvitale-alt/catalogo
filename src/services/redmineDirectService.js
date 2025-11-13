@@ -1,13 +1,16 @@
 // Servicio para consumir API de Redmine directamente
 // ⚠️ SOLO PARA CONSULTAS (READ-ONLY) - NUNCA EDITAR/INSERTAR
 
-const REDMINE_URL = process.env.REDMINE_URL || 'https://redmine.mercap.net';
+const REDMINE_URL = process.env.REDMINE_URL;
 const REDMINE_TOKEN = process.env.REDMINE_TOKEN; // API Key de Redmine
 
 /**
  * Validar que las credenciales están configuradas
  */
 function validarCredenciales() {
+    if (!REDMINE_URL) {
+        throw new Error('❌ REDMINE_URL no está configurado en las variables de entorno');
+    }
     if (!REDMINE_TOKEN) {
         throw new Error('❌ REDMINE_TOKEN no está configurado en las variables de entorno');
     }
@@ -27,7 +30,7 @@ async function obtenerIssues(options = {}) {
     validarCredenciales();
 
     const {
-        project_id = 'ut-bancor',
+        project_id = process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor',
         status_id = '*',
         limit = 15,
         tracker_id = null, // Opcional: si no se especifica, no filtra por tracker
@@ -95,7 +98,7 @@ async function obtenerIssues(options = {}) {
  * @param {number} maxTotal - Límite máximo de issues a obtener (null = sin límite)
  * @returns {Promise<Array>} - Array de todos los issues (limitado por maxTotal)
  */
-async function obtenerTodosLosIssues(project_id = 'ut-bancor', tracker_id = null, maxTotal = null) {
+async function obtenerTodosLosIssues(project_id = process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor', tracker_id = null, maxTotal = null) {
     // Usar el límite por request desde la variable de entorno o default
     const limitPorRequest = parseInt(process.env.REDMINE_LIMIT_PER_REQUEST) || 100;
     let offset = 0;
@@ -218,7 +221,7 @@ function mapearIssue(issue) {
  * @param {number} maxTotal - Límite máximo de issues a obtener (null = sin límite)
  * @returns {Promise<Array>} - Array de issues mapeados
  */
-async function obtenerIssuesMapeados(project_id = 'ut-bancor', tracker_id = null, maxTotal = null) {
+async function obtenerIssuesMapeados(project_id = process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor', tracker_id = null, maxTotal = null) {
     try {
         // Si hay variable de entorno REDMINE_SYNC_LIMIT, usarla
         const limitFromEnv = process.env.REDMINE_SYNC_LIMIT ? parseInt(process.env.REDMINE_SYNC_LIMIT) : null;
@@ -247,7 +250,7 @@ async function probarConexion() {
         console.log('🔄 Probando conexión con Redmine...');
         
         const data = await obtenerIssues({
-            project_id: 'ut-bancor',
+            project_id: process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor',
             limit: 1
         });
         

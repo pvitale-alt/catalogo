@@ -9,7 +9,7 @@ const redmineService = require('./redmineDirectService');
  * @param {number} maxTotal - Límite máximo de issues a sincronizar (null = sin límite)
  * @returns {Promise<Object>} - Resultado de la sincronización
  */
-async function sincronizarRedmine(project_id = 'ut-bancor', tracker_id = null, maxTotal = null) {
+async function sincronizarRedmine(project_id = process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor', tracker_id = null, maxTotal = null) {
     console.log('\n🔄 =================================');
     console.log('   INICIANDO SINCRONIZACIÓN REDMINE');
     console.log('   =================================\n');

@@ -5,10 +5,11 @@ const JWT_EXPIRES_IN = '24h'; // 24 horas
 
 /**
  * Generar token JWT para un usuario autenticado
+ * @param {boolean} isAdmin - Si el usuario es administrador
  */
-function generateToken() {
+function generateToken(isAdmin = false) {
     return jwt.sign(
-        { authenticated: true, timestamp: Date.now() },
+        { authenticated: true, isAdmin, timestamp: Date.now() },
         JWT_SECRET,
         { expiresIn: JWT_EXPIRES_IN }
     );
@@ -57,20 +58,35 @@ function requireAuthJWT(req, res, next) {
     
     // Token válido - continuar
     if (process.env.DEBUG_SESSIONS === 'true') {
-        console.log('✅ Token JWT válido - Autenticado');
+        console.log('✅ Token JWT válido - Autenticado', verification.data.isAdmin ? '(Admin)' : '(Usuario)');
     }
     
     // Agregar información de autenticación al request
     req.authenticated = true;
     req.authData = verification.data;
+    req.isAdmin = verification.data.isAdmin || false;
     
+    next();
+}
+
+/**
+ * Middleware que requiere permisos de administrador
+ */
+function requireAdmin(req, res, next) {
+    if (!req.isAdmin) {
+        return res.status(403).json({
+            success: false,
+            error: 'Acceso denegado. Se requieren permisos de administrador.'
+        });
+    }
     next();
 }
 
 module.exports = {
     generateToken,
     verifyToken,
-    requireAuthJWT
+    requireAuthJWT,
+    requireAdmin
 };
 
 

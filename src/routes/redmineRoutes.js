@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const redmineService = require('../services/redmineDirectService');
 const sincronizacionService = require('../services/sincronizacionService');
+const { requireAdmin } = require('../middleware/authJWT');
 
 /**
  * GET /api/redmine/test
@@ -30,7 +31,7 @@ router.get('/test', async (req, res) => {
  */
 router.get('/issues', async (req, res) => {
     try {
-        const { project_id = 'ut-bancor', tracker_id = null, limit = 10 } = req.query;
+        const { project_id = process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor', tracker_id = null, limit = 10 } = req.query;
         
         const data = await redmineService.obtenerIssues({
             project_id,
@@ -53,10 +54,11 @@ router.get('/issues', async (req, res) => {
 /**
  * POST /api/redmine/sincronizar
  * Sincronizar issues de Redmine con la base de datos
+ * ⚠️ Requiere permisos de administrador
  */
-router.post('/sincronizar', async (req, res) => {
+router.post('/sincronizar', requireAdmin, async (req, res) => {
     try {
-        const { project_id = 'ut-bancor', tracker_id = '19', max_total = null } = req.body;
+        const { project_id = process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor', tracker_id = '19', max_total = null } = req.body;
         
         // Convertir max_total a número si viene como string
         const maxTotal = max_total ? parseInt(max_total) : null;

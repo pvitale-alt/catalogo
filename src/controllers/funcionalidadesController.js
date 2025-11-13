@@ -30,7 +30,8 @@ exports.index = async (req, res) => {
             estadisticas,
             filtros,
             vista,
-            activeMenu: 'funcionalidades'
+            activeMenu: 'funcionalidades',
+            isAdmin: req.isAdmin || false
         });
     } catch (error) {
         console.error('Error al cargar funcionalidades:', error);
@@ -66,7 +67,8 @@ exports.detalle = async (req, res) => {
             funcionalidad,
             clientesFuncionalidad,
             todosLosClientes,
-            activeMenu: 'funcionalidades'
+            activeMenu: 'funcionalidades',
+            isAdmin: req.isAdmin || false
         });
     } catch (error) {
         console.error('Error al cargar detalle:', error);

@@ -2,24 +2,40 @@ const express = require('express');
 const router = express.Router();
 const { generateToken, verifyToken } = require('../middleware/authJWT');
 
-// Contraseña de login desde variable de entorno
-// ⚠️ OBLIGATORIA en producción - Sin esto, el login fallará
-const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD;
+// Contraseñas de login desde variables de entorno
+const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD; // Usuario normal
+const LOGIN_PASSWORD_ADMIN = process.env.LOGIN_PASSWORD_ADMIN; // Admin
 
-// Validar que la contraseña esté configurada en producción
+// Validar que la contraseña de usuario normal esté configurada
 if (!LOGIN_PASSWORD) {
     if (process.env.NODE_ENV === 'production' || process.env.VERCEL === '1') {
         console.error('❌ ERROR CRÍTICO: LOGIN_PASSWORD no está configurada en variables de entorno');
         console.error('   Configura LOGIN_PASSWORD en Vercel → Settings → Environment Variables');
-        // En producción, no usar fallback - el login fallará hasta que se configure
         process.exit(1);
     } else {
-        // Solo en desarrollo local, usar fallback con advertencia
         console.warn('⚠️ ADVERTENCIA: LOGIN_PASSWORD no está configurada');
         console.warn('   El login NO funcionará hasta que configures LOGIN_PASSWORD en tu archivo .env');
         console.warn('   Crea un archivo .env en la raíz del proyecto con: LOGIN_PASSWORD=tu_contraseña');
     }
 }
+
+// Validar que la contraseña de admin esté configurada
+if (!LOGIN_PASSWORD_ADMIN) {
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL === '1') {
+        console.error('❌ ERROR CRÍTICO: LOGIN_PASSWORD_ADMIN no está configurada en variables de entorno');
+        console.error('   Configura LOGIN_PASSWORD_ADMIN en Vercel → Settings → Environment Variables');
+        process.exit(1);
+    } else {
+        console.warn('⚠️ ADVERTENCIA: LOGIN_PASSWORD_ADMIN no está configurada');
+        console.warn('   El login de admin NO funcionará hasta que configures LOGIN_PASSWORD_ADMIN en tu archivo .env');
+        console.warn('   Agrega a tu archivo .env: LOGIN_PASSWORD_ADMIN=tu_contraseña_admin');
+    }
+}
+
+// Log de inicialización
+console.log('🔐 Sistema de autenticación iniciado:');
+console.log('   - Usuario normal: LOGIN_PASSWORD configurada');
+console.log('   - Usuario admin: LOGIN_PASSWORD_ADMIN configurada');
 
 
 /**
@@ -58,9 +74,34 @@ router.post('/', (req, res) => {
         });
     }
     
-    if (password === LOGIN_PASSWORD) {
-        // Generar token JWT
-        const token = generateToken();
+    // Verificar si es admin o usuario normal
+    let isAdmin = false;
+    let loginSuccess = false;
+    
+    // Validar que ambas contraseñas estén configuradas antes de comparar
+    if (!LOGIN_PASSWORD_ADMIN) {
+        console.error('❌ LOGIN_PASSWORD_ADMIN no está configurada');
+        return res.render('pages/login', {
+            title: 'Login - Catálogo',
+            error: 'Error de configuración del servidor. Contacte al administrador.'
+        });
+    }
+    
+    if (password === LOGIN_PASSWORD_ADMIN) {
+        // Login como admin
+        isAdmin = true;
+        loginSuccess = true;
+        console.log('✅ Login exitoso como ADMIN');
+    } else if (password === LOGIN_PASSWORD) {
+        // Login como usuario normal
+        isAdmin = false;
+        loginSuccess = true;
+        console.log('✅ Login exitoso como USUARIO');
+    }
+    
+    if (loginSuccess) {
+        // Generar token JWT con rol
+        const token = generateToken(isAdmin);
         
         // Establecer cookie con el token
         const isSecure = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
@@ -73,7 +114,7 @@ router.post('/', (req, res) => {
         });
         
         if (process.env.DEBUG_SESSIONS === 'true' || process.env.NODE_ENV === 'production') {
-            console.log('✅ Login exitoso - Token JWT generado y cookie establecida');
+            console.log(`✅ Token JWT generado y cookie establecida - Rol: ${isAdmin ? 'ADMIN' : 'USUARIO'}`);
         }
         
         // Redirigir a funcionalidades

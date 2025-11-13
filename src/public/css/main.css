@@ -667,13 +667,35 @@ select.btn:focus {
     gap: 4px;
     user-select: none;
     padding: 0;
+    position: relative;
 }
 
-/* Headers centrados para sección y sponsor */
-.list-header > div:nth-child(2),
+/* Headers centrados para sección */
+.list-header > div:nth-child(2) {
+    justify-content: center;
+    text-align: center;
+}
+
+/* Header Sponsor - centrar solo el texto, ignorando el ícono de ordenamiento */
 .list-header > div:nth-child(3) {
     justify-content: center;
     text-align: center;
+    position: relative;
+}
+
+/* Posicionar el ícono de ordenamiento de forma absoluta para no afectar el centrado del texto */
+.list-header > div:nth-child(3) .sort-icon {
+    position: absolute;
+    right: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+    width: 18px;
+    height: 18px;
+}
+
+.list-header > div:nth-child(3):hover .sort-icon,
+.list-header > div:nth-child(3).sorted .sort-icon {
+    opacity: 1;
 }
 
 .sort-icon {
@@ -752,11 +774,21 @@ select.btn:focus {
     max-width: 150px;
 }
 
-/* Columna sponsor centrada */
-.list-item > .item-text:nth-child(3) {
+/* Columna sponsor/proyecto centrada */
+.list-item > .item-text:nth-child(3),
+.list-item > .sponsor-cell {
+    width: 100px;
     max-width: 100px;
     font-size: 12px;
-    text-align: center;
+    text-align: center !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
 }
 
 /* Columna monto más estrecha */
