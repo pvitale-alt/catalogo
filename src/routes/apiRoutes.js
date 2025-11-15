@@ -169,6 +169,46 @@ router.get('/backlog-proyectos', async (req, res) => {
 });
 
 /**
+ * API de sugerencias de búsqueda para backlog proyectos
+ */
+router.get('/backlog-proyectos/sugerencias', async (req, res) => {
+    try {
+        const query = req.query.q || '';
+        
+        if (!query || query.length < 2) {
+            return res.json({
+                success: true,
+                sugerencias: []
+            });
+        }
+        
+        const filtros = {
+            busqueda: query
+        };
+        
+        const proyectos = await BacklogProyectosModel.obtenerTodas(filtros);
+        
+        // Limitar a 8 sugerencias
+        const sugerencias = proyectos.slice(0, 8).map(proyecto => ({
+            id: proyecto.redmine_id || proyecto.id,
+            titulo: proyecto.titulo || 'Sin título',
+            seccion: proyecto.seccion || proyecto.proyecto_completo || ''
+        }));
+        
+        res.json({
+            success: true,
+            sugerencias
+        });
+    } catch (error) {
+        console.error('Error en API sugerencias backlog:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener sugerencias'
+        });
+    }
+});
+
+/**
  * API de ranking de scores de backlog
  */
 router.get('/backlog-proyectos/ranking', async (req, res) => {

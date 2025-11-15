@@ -24,7 +24,7 @@ class ScoreBacklogModel {
     static async actualizar(funcionalidad_id, criterios) {
         try {
             // Obtener score existente para mantener los pesos
-            const scoreExistente = await this.obtenerPorFuncionalidad(funcionalidad_id);
+            let scoreExistente = await this.obtenerPorFuncionalidad(funcionalidad_id);
             
             if (!scoreExistente) {
                 // Si no existe, primero crear el registro con pesos por defecto usando actualizarPesos
