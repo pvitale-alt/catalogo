@@ -383,13 +383,55 @@
         }
         
         function crearFuncionalidad() {
-            const titulo = prompt('Ingrese el título de la funcionalidad:');
-            if (!titulo || !titulo.trim()) {
+            const modal = document.getElementById('modalNuevaFuncionalidad');
+            if (modal) {
+                modal.style.display = 'flex';
+                // Limpiar campos
+                document.getElementById('nuevaFuncionalidadTitulo').value = '';
+                document.getElementById('nuevaFuncionalidadDescripcion').value = '';
+                document.getElementById('nuevaFuncionalidadSeccion').value = '';
+                const montoInput = document.getElementById('nuevaFuncionalidadMonto');
+                if (montoInput) montoInput.value = '';
+                document.getElementById('nuevaFuncionalidadRedmineId').value = '';
+                document.getElementById('nuevaFuncionalidadProyecto').value = '';
+                document.getElementById('nuevaFuncionalidadSponsor').value = '';
+                document.getElementById('nuevaFuncionalidadReventa').value = '';
+                document.getElementById('nuevaFuncionalidadFechaCreacion').value = '';
+                document.getElementById('nuevaFuncionalidadHoras').value = '';
+            }
+        }
+        
+        function cerrarModalNuevaFuncionalidad() {
+            const modal = document.getElementById('modalNuevaFuncionalidad');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        function guardarNuevaFuncionalidad(event) {
+            event.preventDefault();
+            
+            const titulo = document.getElementById('nuevaFuncionalidadTitulo').value.trim();
+            if (!titulo) {
+                alert('El título es requerido');
                 return;
             }
             
-            const descripcion = prompt('Ingrese la descripción (opcional):') || null;
-            const seccion = prompt('Ingrese la sección (opcional):') || null;
+            const descripcion = document.getElementById('nuevaFuncionalidadDescripcion').value.trim() || null;
+            const seccion = document.getElementById('nuevaFuncionalidadSeccion').value || null;
+            const montoInput = document.getElementById('nuevaFuncionalidadMonto');
+            const monto = montoInput ? (montoInput.value ? parseFloat(montoInput.value) : null) : null;
+            
+            // Campos de Redmine
+            const redmineIdInput = document.getElementById('nuevaFuncionalidadRedmineId');
+            const redmineId = redmineIdInput.value.trim() || null;
+            const proyecto = document.getElementById('nuevaFuncionalidadProyecto').value.trim() || null;
+            const sponsor = document.getElementById('nuevaFuncionalidadSponsor').value.trim() || null;
+            const reventa = document.getElementById('nuevaFuncionalidadReventa').value || null;
+            const fechaCreacionInput = document.getElementById('nuevaFuncionalidadFechaCreacion');
+            const fechaCreacion = fechaCreacionInput.value || null;
+            const horasInput = document.getElementById('nuevaFuncionalidadHoras');
+            const horas = horasInput.value ? parseFloat(horasInput.value) : null;
             
             fetch('/funcionalidades', {
                 method: 'POST',
@@ -397,15 +439,23 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    titulo: titulo.trim(),
-                    descripcion: descripcion ? descripcion.trim() : null,
-                    seccion: seccion ? seccion.trim() : null
+                    titulo: titulo,
+                    titulo_personalizado: titulo,
+                    descripcion: descripcion,
+                    seccion: seccion,
+                    monto: monto,
+                    redmine_id: redmineId,
+                    proyecto: proyecto,
+                    sponsor: sponsor,
+                    reventa: reventa,
+                    fecha_creacion: fechaCreacion,
+                    total_spent_hours: horas
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Funcionalidad creada exitosamente');
+                    cerrarModalNuevaFuncionalidad();
                     window.location.reload();
                 } else {
                     alert('Error al crear funcionalidad: ' + (data.error || 'Error desconocido'));
@@ -446,6 +496,237 @@
                 }
                 // Actualizar localStorage para mantener el estado expandido
                 localStorage.setItem('sidebarCollapsed', 'false');
+            }
+        });
+    </script>
+    
+    <!-- Modal para crear nueva funcionalidad -->
+    <div id="modalNuevaFuncionalidad" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 2000; justify-content: center; align-items: center;">
+        <div class="card" style="max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative;">
+            <!-- Header del modal -->
+            <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 24px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <h1 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin: 0;">
+                        Nueva Funcionalidad
+                    </h1>
+                    <button onclick="cerrarModalNuevaFuncionalidad()" style="background: none; border: none; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='transparent'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="color: var(--text-secondary);">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Formulario -->
+            <form onsubmit="guardarNuevaFuncionalidad(event)">
+                <!-- Título -->
+                <div style="margin-bottom: 32px;">
+                    <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">
+                        Título <span style="color: #d93025;">*</span>
+                    </h2>
+                    <input 
+                        type="text" 
+                        id="nuevaFuncionalidadTitulo" 
+                        class="input" 
+                        required
+                        style="width: 100%; padding: 12px 16px; font-family: 'Google Sans', 'Roboto', sans-serif; font-size: 16px; border-radius: 12px; border: 1px solid var(--border-color); background: #f8f9fa; color: var(--text-primary); transition: all 0.2s ease;"
+                        placeholder="Ingrese el título de la funcionalidad..."
+                        onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'; this.style.background='white'"
+                        onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'; this.style.background='#f8f9fa'"
+                    />
+                </div>
+                
+                <!-- Descripción -->
+                <div style="margin-bottom: 32px;">
+                    <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">
+                        Descripción
+                    </h2>
+                    <textarea 
+                        id="nuevaFuncionalidadDescripcion" 
+                        class="input" 
+                        style="width: 100%; min-height: 120px; padding: 16px; font-family: 'Roboto', sans-serif; font-size: 14px; resize: vertical; border-radius: 12px; border: 1px solid var(--border-color); background: #f8f9fa; color: var(--text-primary); line-height: 1.6; transition: all 0.2s ease;"
+                        placeholder="Ingrese la descripción de la funcionalidad..."
+                        onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'; this.style.background='white'"
+                        onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'; this.style.background='#f8f9fa'"
+                    ></textarea>
+                </div>
+                
+                <!-- Información general -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; max-width: 1200px; margin-left: auto; margin-right: auto; align-items: start;">
+                    <!-- Columna 1: Sección -->
+                    <div>
+                        <div style="min-height: 60px;">
+                            <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
+                                Sección
+                            </div>
+                            <select 
+                                id="nuevaFuncionalidadSeccion" 
+                                class="input"
+                                style="width: 100%; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; cursor: pointer; transition: all 0.2s ease;"
+                            >
+                                <option value="">Seleccionar sección...</option>
+                                <option value="Operatorias">Operatorias</option>
+                                <option value="Reportes e interfaces">Reportes e interfaces</option>
+                                <option value="Backoffice">Backoffice</option>
+                                <option value="Mercados">Mercados</option>
+                                <option value="Contabilidad">Contabilidad</option>
+                                <option value="Valuacion">Valuacion</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Columna 2: Monto (Solo Admin) -->
+                    <% if (isAdmin) { %>
+                        <div>
+                            <div style="min-height: 60px;">
+                                <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
+                                    Monto <span style="font-size: 11px; color: #999;">(Solo Admin)</span>
+                                </div>
+                                <div style="position: relative;">
+                                    <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-weight: 500; pointer-events: none;">$</span>
+                                    <input 
+                                        type="number" 
+                                        id="nuevaFuncionalidadMonto" 
+                                        class="input" 
+                                        placeholder="0"
+                                        step="0.01"
+                                        min="0"
+                                        style="width: 100%; padding: 10px 16px 10px 32px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; transition: all 0.2s ease;"
+                                        onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'"
+                                        onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <!-- Campos de Redmine -->
+                <div style="border-top: 1px solid var(--border-color); padding-top: 24px; margin-top: 24px;">
+                    <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary);">
+                        Información de Redmine
+                    </h2>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; max-width: 1200px; margin-left: auto; margin-right: auto; align-items: start;">
+                        <!-- Columna 1: Redmine ID, Proyecto -->
+                        <div>
+                            <div style="min-height: 60px; margin-bottom: 24px;">
+                                <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
+                                    Redmine ID
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="nuevaFuncionalidadRedmineId" 
+                                    class="input" 
+                                    placeholder="Opcional (se generará automáticamente si está vacío)"
+                                    style="width: 100%; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; transition: all 0.2s ease;"
+                                    onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'"
+                                    onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'"
+                                />
+                            </div>
+                            
+                            <div style="min-height: 60px;">
+                                <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
+                                    Proyecto
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="nuevaFuncionalidadProyecto" 
+                                    class="input" 
+                                    placeholder="Nombre del proyecto"
+                                    style="width: 100%; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; transition: all 0.2s ease;"
+                                    onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'"
+                                    onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'"
+                                />
+                            </div>
+                        </div>
+                        
+                        <!-- Columna 2: Sponsor, Reventa -->
+                        <div>
+                            <div style="min-height: 60px; margin-bottom: 24px;">
+                                <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
+                                    Sponsor
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="nuevaFuncionalidadSponsor" 
+                                    class="input" 
+                                    placeholder="Sponsor del proyecto"
+                                    style="width: 100%; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; transition: all 0.2s ease;"
+                                    onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'"
+                                    onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'"
+                                />
+                            </div>
+                            
+                            <div style="min-height: 60px;">
+                                <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
+                                    Reventa
+                                </div>
+                                <select 
+                                    id="nuevaFuncionalidadReventa" 
+                                    class="input"
+                                    style="width: 100%; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; cursor: pointer; transition: all 0.2s ease;"
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Si">Si</option>
+                                    <option value="No">No</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Columna 3: Fecha de creación, Horas dedicadas -->
+                        <div>
+                            <div style="min-height: 60px; margin-bottom: 24px;">
+                                <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
+                                    Fecha de creación
+                                </div>
+                                <input 
+                                    type="date" 
+                                    id="nuevaFuncionalidadFechaCreacion" 
+                                    class="input" 
+                                    style="width: 100%; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; transition: all 0.2s ease;"
+                                    onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'"
+                                    onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'"
+                                />
+                            </div>
+                            
+                            <div style="min-height: 60px;">
+                                <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
+                                    Horas dedicadas
+                                </div>
+                                <input 
+                                    type="number" 
+                                    id="nuevaFuncionalidadHoras" 
+                                    class="input" 
+                                    placeholder="0"
+                                    step="0.01"
+                                    min="0"
+                                    style="width: 100%; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; transition: all 0.2s ease;"
+                                    onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'"
+                                    onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones -->
+                <div style="display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 24px;">
+                    <button type="button" onclick="cerrarModalNuevaFuncionalidad()" class="button button-secondary">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="button">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Cerrar modal al hacer clic fuera -->
+    <script>
+        document.getElementById('modalNuevaFuncionalidad')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModalNuevaFuncionalidad();
             }
         });
     </script>

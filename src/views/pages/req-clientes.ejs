@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/main.css?v=<%= Date.now() %>">
+</head>
+<body>
+    <!-- Header General -->
+    <header class="top-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="/images/logo.png" alt="Logo" style="height: 28px; width: auto; display: block;" onerror="this.style.display='none';" />
+            <span onclick="window.location.href='/req-clientes'" style="font-size: 16px; font-weight: 500; color: var(--text-secondary); font-family: 'Google Sans', 'Roboto', sans-serif; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-secondary)'">Catálogo</span>
+        </div>
+    </header>
+    
+    <div class="app-container" style="margin-top: 0;">
+        <%- include('../partials/sidebar', { activeMenu: 'req-clientes' }) %>
+        
+        <div class="main-content">
+            <!-- Contenido -->
+            <div class="content-area" style="padding-top: 0;">
+                <div class="empty-state" style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+                    <div class="empty-state-icon" style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">
+                        📋
+                    </div>
+                    <div class="empty-state-text" style="font-size: 24px; margin-bottom: 8px; color: var(--text-primary); font-weight: 500;">
+                        Próximamente
+                    </div>
+                    <div class="empty-state-subtext" style="font-size: 16px; color: var(--text-secondary); max-width: 500px; margin: 0 auto;">
+                        Esta sección está en desarrollo. Pronto podrás gestionar requerimientos de clientes aquí.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="/js/main.js"></script>
+</body>
+</html>
+

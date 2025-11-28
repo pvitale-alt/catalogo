@@ -150,12 +150,20 @@ exports.crear = async (req, res) => {
             });
         }
         
-        // Crear funcionalidad manualmente (sin redmine_id)
+        // Crear funcionalidad manualmente (puede incluir datos de Redmine)
         const datos = {
             titulo: req.body.titulo || 'Nueva funcionalidad',
+            titulo_personalizado: req.body.titulo_personalizado || req.body.titulo || 'Nueva funcionalidad',
             descripcion: req.body.descripcion || null,
             seccion: req.body.seccion || null,
-            monto: req.body.monto ? parseFloat(req.body.monto) : null
+            monto: req.body.monto ? parseFloat(req.body.monto) : null,
+            // Datos de Redmine
+            redmine_id: req.body.redmine_id || null,
+            proyecto: req.body.proyecto || null,
+            sponsor: req.body.sponsor || null,
+            reventa: req.body.reventa || null,
+            fecha_creacion: req.body.fecha_creacion || null,
+            total_spent_hours: req.body.total_spent_hours ? parseFloat(req.body.total_spent_hours) : null
         };
         
         if (!datos.titulo) {

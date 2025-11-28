@@ -107,20 +107,87 @@ class FuncionalidadModel {
     }
 
     /**
-     * Crear nueva funcionalidad manualmente (sin redmine_id)
+     * Crear nueva funcionalidad manualmente (puede incluir datos de Redmine)
      */
     static async crearManual(datos) {
+        const client = await pool.connect();
         try {
+            await client.query('BEGIN');
+            
+            let redmineId = null;
+            
+            // Verificar si se proporcionan datos de Redmine
+            const tieneDatosRedmine = datos.redmine_id || datos.proyecto || datos.sponsor || 
+                                     datos.reventa !== null && datos.reventa !== '' || 
+                                     datos.fecha_creacion || datos.total_spent_hours !== null;
+            
+            // Si se proporcionan datos de Redmine, crear registro en redmine_issues
+            if (tieneDatosRedmine) {
+                // Generar redmine_id si no se proporciona (usar números negativos para diferenciarlos de Redmine real)
+                if (!datos.redmine_id) {
+                    // Obtener el menor redmine_id negativo existente y restar 1
+                    const minIdResult = await client.query(`
+                        SELECT MIN(redmine_id) as min_id 
+                        FROM redmine_issues 
+                        WHERE redmine_id < 0
+                    `);
+                    const minId = minIdResult.rows[0]?.min_id || 0;
+                    redmineId = minId - 1; // Generar un ID negativo único
+                } else {
+                    redmineId = parseInt(datos.redmine_id, 10);
+                }
+                
+                const fechaCreacion = datos.fecha_creacion 
+                    ? new Date(datos.fecha_creacion).toISOString() 
+                    : new Date().toISOString();
+                
+                // Normalizar reventa (Si/No/null)
+                let reventaNormalizada = null;
+                if (datos.reventa && datos.reventa !== '') {
+                    const reventaLower = datos.reventa.toLowerCase();
+                    if (reventaLower === 'si' || reventaLower === 'yes' || reventaLower === 'true' || reventaLower === '1') {
+                        reventaNormalizada = 'Si';
+                    } else if (reventaLower === 'no' || reventaLower === 'false' || reventaLower === '0') {
+                        reventaNormalizada = 'No';
+                    }
+                }
+                
+                await client.query(`
+                    INSERT INTO redmine_issues (
+                        redmine_id, titulo, proyecto, fecha_creacion, sponsor, reventa, 
+                        total_spent_hours, sincronizado_en
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+                    ON CONFLICT (redmine_id) 
+                    DO UPDATE SET
+                        titulo = EXCLUDED.titulo,
+                        proyecto = EXCLUDED.proyecto,
+                        fecha_creacion = EXCLUDED.fecha_creacion,
+                        sponsor = EXCLUDED.sponsor,
+                        reventa = EXCLUDED.reventa,
+                        total_spent_hours = EXCLUDED.total_spent_hours,
+                        sincronizado_en = CURRENT_TIMESTAMP
+                `, [
+                    redmineId,
+                    datos.titulo || 'Sin título',
+                    datos.proyecto || null,
+                    fechaCreacion,
+                    datos.sponsor || null,
+                    reventaNormalizada,
+                    datos.total_spent_hours || null
+                ]);
+            }
+            
+            // Crear funcionalidad (usar redmine_id si se creó en redmine_issues, sino NULL)
+            const tituloPersonalizado = datos.titulo_personalizado || datos.titulo || null;
+            
             const query = `
-                INSERT INTO funcionalidades (titulo, descripcion, seccion, monto, titulo_personalizado, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                INSERT INTO funcionalidades (redmine_id, titulo, descripcion, seccion, monto, titulo_personalizado, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 RETURNING *
             `;
             
-            // Si no se proporciona titulo_personalizado, usar el titulo como default
-            const tituloPersonalizado = datos.titulo_personalizado || datos.titulo || null;
-            
-            const result = await pool.query(query, [
+            const result = await client.query(query, [
+                redmineId,
                 datos.titulo,
                 datos.descripcion || null,
                 datos.seccion || null,
@@ -128,10 +195,14 @@ class FuncionalidadModel {
                 tituloPersonalizado
             ]);
             
+            await client.query('COMMIT');
             return result.rows[0];
         } catch (error) {
+            await client.query('ROLLBACK');
             console.error('Error al crear funcionalidad manual:', error);
             throw error;
+        } finally {
+            client.release();
         }
     }
 
