@@ -28,7 +28,7 @@ class FuncionalidadModel {
                     COALESCE(f.titulo_personalizado, v.titulo) ILIKE $${paramCount} OR 
                     v.titulo ILIKE $${paramCount} OR 
                     v.descripcion ILIKE $${paramCount} OR 
-                    v.sponsor ILIKE $${paramCount} OR 
+                    v.cliente ILIKE $${paramCount} OR 
                     v.seccion ILIKE $${paramCount}
                 )`;
                 params.push(`%${filtros.busqueda}%`);
@@ -49,25 +49,38 @@ class FuncionalidadModel {
                 paramCount++;
             }
             
-            // Filtro por sponsor (compatibilidad con filtro único)
+            // Filtro por sponsor (usando cliente)
             if (filtros.sponsor) {
-                query += ` AND v.sponsor = $${paramCount}`;
+                query += ` AND v.cliente = $${paramCount}`;
                 params.push(filtros.sponsor);
                 paramCount++;
             }
             
-            // Filtro por múltiples sponsors
+            // Filtro por múltiples sponsors (usando cliente)
             if (filtros.sponsors && filtros.sponsors.length > 0) {
-                query += ` AND v.sponsor = ANY($${paramCount})`;
+                query += ` AND v.cliente = ANY($${paramCount})`;
                 params.push(filtros.sponsors);
                 paramCount++;
             }
 
             // Ordenamiento (por defecto: score_total DESC)
-            const ordenValido = ['titulo', 'score_total', 'monto', 'fecha_creacion', 'created_at', 'epic_redmine', 'sponsor', 'seccion'];
-            const orden = ordenValido.includes(filtros.orden) ? filtros.orden : 'score_total';
+            // Nota: 'sponsor' ahora se ordena por 'cliente'
+            const ordenValido = ['titulo', 'score_total', 'monto', 'fecha_creacion', 'created_at', 'epic_redmine', 'sponsor', 'seccion', 'cliente'];
+            let orden = ordenValido.includes(filtros.orden) ? filtros.orden : 'score_total';
+            
+            // Mapear 'sponsor' a 'cliente' para ordenamiento
+            if (orden === 'sponsor') {
+                orden = 'cliente';
+            }
+            
             const direccion = filtros.direccion === 'asc' ? 'ASC' : 'DESC';
-            query += ` ORDER BY v.${orden} ${direccion} NULLS LAST`;
+            
+            // Manejar ordenamiento especial para score_total
+            if (orden === 'score_total') {
+                query += ` ORDER BY COALESCE(s.score_calculado, 0) ${direccion}`;
+            } else {
+                query += ` ORDER BY v.${orden} ${direccion} NULLS LAST`;
+            }
 
             const result = await pool.query(query, params);
             return result.rows;
@@ -117,18 +130,18 @@ class FuncionalidadModel {
             let redmineId = null;
             
             // Verificar si se proporcionan datos de Redmine
-            const tieneDatosRedmine = datos.redmine_id || datos.proyecto || datos.sponsor || 
+            const tieneDatosRedmine = datos.redmine_id || datos.proyecto || datos.cliente || 
                                      datos.reventa !== null && datos.reventa !== '' || 
                                      datos.fecha_creacion || datos.total_spent_hours !== null;
             
-            // Si se proporcionan datos de Redmine, crear registro en redmine_issues
+            // Si se proporcionan datos de Redmine, crear registro en redmine_funcionalidades
             if (tieneDatosRedmine) {
                 // Generar redmine_id si no se proporciona (usar números negativos para diferenciarlos de Redmine real)
                 if (!datos.redmine_id) {
                     // Obtener el menor redmine_id negativo existente y restar 1
                     const minIdResult = await client.query(`
                         SELECT MIN(redmine_id) as min_id 
-                        FROM redmine_issues 
+                        FROM redmine_funcionalidades 
                         WHERE redmine_id < 0
                     `);
                     const minId = minIdResult.rows[0]?.min_id || 0;
@@ -153,31 +166,29 @@ class FuncionalidadModel {
                 }
                 
                 await client.query(`
-                    INSERT INTO redmine_issues (
-                        redmine_id, titulo, proyecto, fecha_creacion, sponsor, reventa, 
+                    INSERT INTO redmine_funcionalidades (
+                        redmine_id, titulo, cliente, fecha_creacion, reventa, 
                         total_spent_hours, sincronizado_en
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+                    ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
                     ON CONFLICT (redmine_id) 
                     DO UPDATE SET
                         titulo = EXCLUDED.titulo,
-                        proyecto = EXCLUDED.proyecto,
+                        cliente = EXCLUDED.cliente,
                         fecha_creacion = EXCLUDED.fecha_creacion,
-                        sponsor = EXCLUDED.sponsor,
                         reventa = EXCLUDED.reventa,
                         total_spent_hours = EXCLUDED.total_spent_hours,
                         sincronizado_en = CURRENT_TIMESTAMP
                 `, [
                     redmineId,
                     datos.titulo || 'Sin título',
-                    datos.proyecto || null,
+                    datos.cliente || datos.proyecto || null, // Soporta ambos nombres por compatibilidad
                     fechaCreacion,
-                    datos.sponsor || null,
                     reventaNormalizada,
                     datos.total_spent_hours || null
                 ]);
             }
             
-            // Crear funcionalidad (usar redmine_id si se creó en redmine_issues, sino NULL)
+            // Crear funcionalidad (usar redmine_id si se creó en redmine_funcionalidades, sino NULL)
             const tituloPersonalizado = datos.titulo_personalizado || datos.titulo || null;
             
             const query = `
@@ -298,20 +309,56 @@ class FuncionalidadModel {
     }
     
     /**
-     * Obtener todos los sponsors únicos
+     * Obtener todos los sponsors únicos (usando cliente)
      */
     static async obtenerSponsors() {
         try {
             const query = `
-                SELECT DISTINCT sponsor
+                SELECT DISTINCT cliente AS sponsor
                 FROM v_funcionalidades_completas
-                WHERE sponsor IS NOT NULL AND sponsor != ''
-                ORDER BY sponsor
+                WHERE cliente IS NOT NULL AND cliente != ''
+                ORDER BY cliente
             `;
             const result = await pool.query(query);
             return result.rows.map(row => row.sponsor);
         } catch (error) {
             console.error('Error al obtener sponsors:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener funcionalidad por sponsor (código del proyecto)
+     * El sponsor es el código del proyecto (identifier) de Redmine
+     * @param {string} sponsor - Código del proyecto (ej: "ut-bancor-ext-49213")
+     * @returns {Promise<Object|null>} - Funcionalidad encontrada o null
+     */
+    static async obtenerPorSponsor(sponsor) {
+        try {
+            if (!sponsor) {
+                return null;
+            }
+            
+            const sponsorNormalizado = String(sponsor).trim();
+            
+            // Buscar por redmine_id (puede ser el identifier del proyecto) o por cliente
+            const query = `
+                SELECT 
+                    v.*,
+                    f.titulo_personalizado,
+                    s.score_calculado
+                FROM v_funcionalidades_completas v
+                LEFT JOIN funcionalidades f ON v.redmine_id = f.redmine_id
+                LEFT JOIN score s ON v.redmine_id = s.funcionalidad_id
+                WHERE TRIM(v.cliente) = TRIM($1)
+                   OR CAST(v.redmine_id AS TEXT) = $1
+                ORDER BY v.redmine_id DESC
+                LIMIT 1
+            `;
+            const result = await pool.query(query, [sponsorNormalizado]);
+            return result.rows[0] || null;
+        } catch (error) {
+            console.error('Error al obtener funcionalidad por sponsor:', error);
             throw error;
         }
     }

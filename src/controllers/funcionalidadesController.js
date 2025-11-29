@@ -22,6 +22,8 @@ exports.index = async (req, res) => {
         const sponsors = await FuncionalidadModel.obtenerSponsors();
         const estadisticas = await FuncionalidadModel.obtenerEstadisticas();
         
+        const REDMINE_URL = process.env.REDMINE_URL || 'https://redmine.mercap.net';
+        
         res.render('pages/funcionalidades', {
             title: 'Funcionalidades',
             funcionalidades,
@@ -31,7 +33,8 @@ exports.index = async (req, res) => {
             filtros,
             vista,
             activeMenu: 'funcionalidades',
-            isAdmin: req.isAdmin || false
+            isAdmin: req.isAdmin || false,
+            redmineBaseUrl: REDMINE_URL
         });
     } catch (error) {
         console.error('Error al cargar funcionalidades:', error);
@@ -125,6 +128,24 @@ exports.detalle = async (req, res) => {
             console.log('⚠️ No se pudo obtener proyectoCodigo, no se buscarán req clientes interesados');
         }
         
+        // Obtener epics de la funcionalidad
+        const EpicModel = require('../models/EpicModel');
+        let epics = [];
+        let totalHorasDedicadas = 0;
+        if (proyectoCodigo) {
+            try {
+                epics = await EpicModel.obtenerPorFuncionalidad(proyectoCodigo);
+                totalHorasDedicadas = await EpicModel.obtenerTotalHorasDedicadas(proyectoCodigo);
+            } catch (error) {
+                console.error('Error al obtener epics:', error);
+            }
+        }
+        
+        const buildRedmineBaseUrl = () => {
+            const base = process.env.REDMINE_PUBLIC_URL || process.env.REDMINE_URL || 'https://redmine.mercap.net';
+            return base.replace(/\/+$/, '');
+        };
+        
         res.render('pages/funcionalidad-detalle', {
             title: funcionalidad.titulo_personalizado || funcionalidad.titulo || 'Funcionalidad',
             funcionalidad,
@@ -132,8 +153,11 @@ exports.detalle = async (req, res) => {
             todosLosClientes,
             proyectoCodigo,
             reqClientesInteresados,
+            epics,
+            totalHorasDedicadas,
             activeMenu: 'funcionalidades',
-            isAdmin: req.isAdmin || false
+            isAdmin: req.isAdmin || false,
+            redmineBaseUrl: buildRedmineBaseUrl()
         });
     } catch (error) {
         console.error('Error al cargar detalle:', error);
@@ -225,7 +249,7 @@ exports.crear = async (req, res) => {
             // Datos de Redmine
             redmine_id: req.body.redmine_id || null,
             proyecto: req.body.proyecto || null,
-            sponsor: req.body.sponsor || null,
+            cliente: req.body.cliente || req.body.proyecto || null, // Cliente (se usa como sponsor)
             reventa: req.body.reventa || null,
             fecha_creacion: req.body.fecha_creacion || null,
             total_spent_hours: req.body.total_spent_hours ? parseFloat(req.body.total_spent_hours) : null
@@ -339,6 +363,119 @@ exports.obtenerClientes = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error al obtener los clientes'
+        });
+    }
+};
+
+/**
+ * Actualizar epics de una funcionalidad desde Redmine
+ */
+exports.actualizarEpics = async (req, res) => {
+    try {
+        if (!req.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                error: 'Solo administradores pueden actualizar epics'
+            });
+        }
+
+        const { id } = req.params; // redmine_id de la funcionalidad
+        const funcionalidad = await FuncionalidadModel.obtenerPorId(id);
+        
+        if (!funcionalidad) {
+            return res.status(404).json({
+                success: false,
+                error: 'Funcionalidad no encontrada'
+            });
+        }
+
+        // Obtener código del proyecto (identifier)
+        let proyectoCodigo = null;
+        const REDMINE_URL = process.env.REDMINE_URL;
+        const REDMINE_TOKEN = process.env.REDMINE_TOKEN;
+
+        if (!REDMINE_URL || !REDMINE_TOKEN) {
+            return res.status(500).json({
+                success: false,
+                error: 'REDMINE_URL o REDMINE_TOKEN no están configurados'
+            });
+        }
+
+        const redmineIdStr = String(funcionalidad.redmine_id);
+        const esNumero = /^\d+$/.test(redmineIdStr);
+
+        if (esNumero) {
+            // Es un ID de issue numérico, obtener el issue y extraer el identifier del proyecto
+            const baseUrl = REDMINE_URL.replace(/\/+$/, '');
+            const url = `${baseUrl}/issues/${funcionalidad.redmine_id}.json?key=${REDMINE_TOKEN}`;
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'User-Agent': 'Catalogo-NodeJS/1.0'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.issue && data.issue.project && data.issue.project.identifier) {
+                    proyectoCodigo = data.issue.project.identifier;
+                }
+            }
+        } else {
+            // Parece ser un identifier de proyecto, usarlo directamente
+            proyectoCodigo = redmineIdStr;
+        }
+
+        if (!proyectoCodigo) {
+            return res.status(400).json({
+                success: false,
+                error: 'No se pudo obtener el código del proyecto'
+            });
+        }
+
+        // Obtener epics desde Redmine (todos los estados)
+        const baseUrl = REDMINE_URL.replace(/\/+$/, '');
+        const epicsUrl = `${baseUrl}/issues.json?project_id=${proyectoCodigo}&tracker_id=19&status_id=*&key=${REDMINE_TOKEN}&limit=100`;
+        
+        console.log(`🔄 Obteniendo epics desde: ${epicsUrl.replace(/key=[^&]+/, 'key=***')}`);
+        
+        const epicsResponse = await fetch(epicsUrl, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'User-Agent': 'Catalogo-NodeJS/1.0'
+            }
+        });
+
+        if (!epicsResponse.ok) {
+            return res.status(epicsResponse.status).json({
+                success: false,
+                error: `Error al obtener epics desde Redmine: ${epicsResponse.statusText}`
+            });
+        }
+
+        const epicsData = await epicsResponse.json();
+        const epics = epicsData.issues || [];
+
+        // Guardar epics en la base de datos
+        const EpicModel = require('../models/EpicModel');
+        const resultado = await EpicModel.guardarEpics(proyectoCodigo, epics);
+
+        res.json({
+            success: true,
+            message: resultado.message,
+            epics: epics.length,
+            insertados: resultado.insertados
+        });
+    } catch (error) {
+        console.error('Error al actualizar epics:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al actualizar los epics'
         });
     }
 };

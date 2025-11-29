@@ -178,7 +178,10 @@
             <% } %>
             
             <!-- Contenido -->
-            <div class="content-area">
+            <div class="content-area" style="position: relative;">
+                <!-- Imagen de fondo con opacidad -->
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; opacity: 0.2; background-image: url('/images/cover.png'); background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none;"></div>
+                <div style="position: relative; z-index: 1;">
                 <% if (funcionalidades.length === 0) { %>
                     <div class="empty-state">
                         <div class="empty-state-icon">📋</div>
@@ -214,7 +217,7 @@
                                 </svg>
                             </div>
                             <div onclick="ordenar('epic_redmine')" style="cursor: pointer;" class="desktop-only" data-sort="epic_redmine">
-                                Epic Redmine
+                                Redmine
                                 <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M7 10l5 5 5-5z"/>
                                 </svg>
@@ -240,7 +243,7 @@
                                     </div>
                                 </div>
                                 <div class="item-text"><%= (func.seccion || '-').trim() %></div>
-                                <div class="item-text sponsor-cell"><%= (func.sponsor || '-').trim() %></div>
+                                <div class="item-text sponsor-cell"><%= (func.cliente || '-').trim() %></div>
                                 <div class="item-text desktop-only">
                                     <% if (func.fecha_creacion) { %>
                                         <%= new Date(func.fecha_creacion).toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' }) %>
@@ -249,9 +252,12 @@
                                     <% } %>
                                 </div>
                                 <div class="item-text desktop-only">
-                                    <% if (func.epic_redmine) { %>
-                                        <a href="<%= func.epic_redmine %>" target="_blank" onclick="event.stopPropagation();" style="color: var(--primary-color); text-decoration: none;">
-                                            Ver en Redmine
+                                    <% if (func.redmine_id) { 
+                                        const baseUrl = (typeof redmineBaseUrl !== 'undefined' ? redmineBaseUrl : 'https://redmine.mercap.net').replace(/\/+$/, '');
+                                        const redmineUrl = `${baseUrl}/projects/${func.redmine_id}`;
+                                    %>
+                                        <a href="<%= redmineUrl %>" target="_blank" onclick="event.stopPropagation();" style="color: var(--primary-color); text-decoration: none;">
+                                            Ver redmine
                                         </a>
                                     <% } else { %>
                                         -
@@ -300,12 +306,12 @@
                                         </span>
                                     <% } %>
                                     
-                                    <% if (func.sponsor) { %>
+                                    <% if (func.cliente) { %>
                                         <span class="card-tag">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                                             </svg>
-                                            <%= func.sponsor %>
+                                            <%= func.cliente %>
                                         </span>
                                     <% } %>
                                     
@@ -324,6 +330,8 @@
                         <% }) %>
                     </div>
                 <% } %>
+            </div>
+                </div>
             </div>
         </div>
     </div>
@@ -356,7 +364,7 @@
                                 </svg>
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="font-size: 14px; color: #202124; font-weight: 400;">${func.titulo}</div>
-                                    ${func.seccion || func.sponsor ? `<div style="font-size: 12px; color: #5f6368; margin-top: 2px;">${[func.seccion, func.sponsor].filter(Boolean).join(' • ')}</div>` : ''}
+                                    ${func.seccion || func.cliente ? `<div style="font-size: 12px; color: #5f6368; margin-top: 2px;">${[func.seccion, func.cliente].filter(Boolean).join(' • ')}</div>` : ''}
                                 </div>
                             </div>
                         `).join('');
@@ -391,7 +399,7 @@
                 if (montoInput) montoInput.value = '';
                 document.getElementById('nuevaFuncionalidadRedmineId').value = '';
                 document.getElementById('nuevaFuncionalidadProyecto').value = '';
-                document.getElementById('nuevaFuncionalidadSponsor').value = '';
+                document.getElementById('nuevaFuncionalidadCliente').value = '';
                 document.getElementById('nuevaFuncionalidadReventa').value = '';
                 document.getElementById('nuevaFuncionalidadFechaCreacion').value = '';
                 document.getElementById('nuevaFuncionalidadHoras').value = '';
@@ -423,7 +431,7 @@
             const redmineIdInput = document.getElementById('nuevaFuncionalidadRedmineId');
             const redmineId = redmineIdInput.value.trim() || null;
             const proyecto = document.getElementById('nuevaFuncionalidadProyecto').value.trim() || null;
-            const sponsor = document.getElementById('nuevaFuncionalidadSponsor').value.trim() || null;
+            const cliente = document.getElementById('nuevaFuncionalidadCliente').value.trim() || null;
             const reventa = document.getElementById('nuevaFuncionalidadReventa').value || null;
             const fechaCreacionInput = document.getElementById('nuevaFuncionalidadFechaCreacion');
             const fechaCreacion = fechaCreacionInput.value || null;
@@ -443,7 +451,7 @@
                     monto: monto,
                     redmine_id: redmineId,
                     proyecto: proyecto,
-                    sponsor: sponsor,
+                    cliente: cliente,
                     reventa: reventa,
                     fecha_creacion: fechaCreacion,
                     total_spent_hours: horas
@@ -637,17 +645,17 @@
                             </div>
                         </div>
                         
-                        <!-- Columna 2: Sponsor, Reventa -->
+                        <!-- Columna 2: Cliente, Reventa -->
                         <div>
                             <div style="min-height: 60px; margin-bottom: 24px;">
                                 <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
-                                    Sponsor
+                                    Cliente
                                 </div>
                                 <input 
                                     type="text" 
-                                    id="nuevaFuncionalidadSponsor" 
+                                    id="nuevaFuncionalidadCliente" 
                                     class="input" 
-                                    placeholder="Sponsor del proyecto"
+                                    placeholder="Cliente (se usa como sponsor)"
                                     style="width: 100%; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; transition: all 0.2s ease;"
                                     onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'"
                                     onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'"

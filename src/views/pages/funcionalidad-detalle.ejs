@@ -18,8 +18,10 @@
     <div class="app-container" style="margin-top: 0;">
         <%- include('../partials/sidebar') %>
         
-        <div class="main-content">
-            <div class="content-area">
+        <div class="main-content" style="position: relative;">
+            <!-- Imagen de fondo con opacidad -->
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; opacity: 0.2; background-image: url('/images/cover.png'); background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none;"></div>
+            <div class="content-area" style="position: relative; z-index: 1;">
                 <!-- Botón volver -->
                 <div style="margin-bottom: 24px;">
                     <button onclick="history.back()" class="button button-secondary">
@@ -60,32 +62,25 @@
                                         </span>
                                     </div>
                                     
-                                    <% if (funcionalidad.epic_redmine) { %>
+                                    <% if (funcionalidad.redmine_id) { 
+                                        const baseUrl = (typeof redmineBaseUrl !== 'undefined' ? redmineBaseUrl : 'https://redmine.mercap.net').replace(/\/+$/, '');
+                                        const redmineUrl = `${baseUrl}/projects/${funcionalidad.redmine_id}`;
+                                    %>
                                         <div style="margin-top: 8px;">
-                                            <a href="<%= funcionalidad.epic_redmine %>" target="_blank" style="color: var(--primary-color); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px;">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                                                </svg>
-                                                Epic Redmine
-                                            </a>
-                                            <% if (funcionalidad.titulo) { %>
-                                                <div style="margin-top: 4px; color: var(--text-secondary); font-size: 12px; padding-left: 24px;">
-                                                    Título Redmine: <%= funcionalidad.titulo %>
-                                                </div>
+                                            <% if (funcionalidad.titulo && funcionalidad.titulo !== funcionalidad.titulo_personalizado) { %>
+                                                <a href="<%= redmineUrl %>" target="_blank" style="color: var(--primary-color); text-decoration: none; font-size: 14px; display: inline-block;">
+                                                    <%= funcionalidad.titulo %>
+                                                </a>
+                                            <% } else { %>
+                                                <a href="<%= redmineUrl %>" target="_blank" style="color: var(--primary-color); text-decoration: none; font-size: 14px; display: inline-block;">
+                                                    Ver en Redmine
+                                                </a>
                                             <% } %>
                                             <% if (typeof proyectoCodigo !== 'undefined' && proyectoCodigo) { %>
-                                                <div style="margin-top: 4px; color: var(--text-secondary); font-size: 12px; padding-left: 24px;">
-                                                    Código del proyecto: <%= proyectoCodigo %>
+                                                <div style="margin-top: 8px; color: var(--text-secondary); font-size: 14px;">
+                                                    <%= proyectoCodigo %>
                                                 </div>
                                             <% } %>
-                                        </div>
-                                    <% } %>
-                                    <% if (funcionalidad.proyecto) { %>
-                                        <div style="margin-top: 8px; color: var(--text-secondary); font-size: 14px; display: flex; align-items: center; gap: 6px;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
-                                                <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
-                                            </svg>
-                                            Cliente: <%= funcionalidad.proyecto %>
                                         </div>
                                     <% } %>
                                 </div>
@@ -98,6 +93,12 @@
                                             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                         </svg>
                                         <span>Eliminar</span>
+                                    </button>
+                                    <button onclick="actualizarEpics()" class="button button-secondary" id="btnActualizar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                                        </svg>
+                                        <span>Actualizar</span>
                                     </button>
                                 <% } %>
                                 <button onclick="toggleEdicion()" class="button button-secondary" id="btnEditar">
@@ -113,6 +114,58 @@
                                     <span>Evaluar</span>
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Epics -->
+                    <div style="margin-bottom: 32px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+                        <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">
+                            Epics
+                        </h2>
+                        <div id="epicsContainer">
+                            <% if (typeof epics !== 'undefined' && epics.length > 0) { %>
+                                <% 
+                                const baseUrl = (typeof redmineBaseUrl !== 'undefined' ? redmineBaseUrl : 'https://redmine.mercap.net').replace(/\/+$/, '');
+                                %>
+                                <% epics.forEach(epic => { 
+                                    const epicUrl = epic.epic_redmine_id ? `${baseUrl}/issues/${epic.epic_redmine_id}` : null;
+                                %>
+                                    <div style="display: flex; align-items: center; gap: 16px; padding: 8px 0; border-bottom: 1px solid #f1f3f4; font-size: 13px; color: var(--text-primary);">
+                                        <div style="flex: 1; min-width: 0;">
+                                            <% if (epicUrl) { %>
+                                                <a href="<%= epicUrl %>" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                                                    <%= epic.titulo || 'Sin título' %>
+                                                </a>
+                                            <% } else { %>
+                                                <span style="font-weight: 500;"><%= epic.titulo || 'Sin título' %></span>
+                                            <% } %>
+                                        </div>
+                                        <div style="color: var(--text-secondary); min-width: 90px;">
+                                            <% if (epic.fecha_inicio) { %>
+                                                <%= new Date(epic.fecha_inicio).toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' }) %>
+                                            <% } else { %>
+                                                -
+                                            <% } %>
+                                        </div>
+                                        <div style="color: var(--text-secondary); min-width: 90px;">
+                                            <% if (epic.fecha_finalizacion) { %>
+                                                <%= new Date(epic.fecha_finalizacion).toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' }) %>
+                                            <% } else { %>
+                                                -
+                                            <% } %>
+                                        </div>
+                                        <div style="color: var(--text-secondary); min-width: 80px; text-align: right;">
+                                            <% if (epic.horas_dedicadas) { %>
+                                                <%= parseFloat(epic.horas_dedicadas).toFixed(2) %> hs
+                                            <% } else { %>
+                                                -
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } else { %>
+                                <span style="color: var(--text-secondary); font-style: italic;">Sin epics. Presiona "Actualizar" para sincronizar desde Redmine.</span>
+                            <% } %>
                         </div>
                     </div>
                     
@@ -168,7 +221,7 @@
                                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                                     </svg>
                                     <span style="font-weight: 500; color: var(--text-primary);">
-                                        <%= funcionalidad.sponsor || '-' %>
+                                        <%= funcionalidad.cliente || '-' %>
                                     </span>
                                 </div>
                             </div>
@@ -274,8 +327,16 @@
                                         <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
                                     </svg>
                                     <span style="font-weight: 500; color: var(--text-primary);">
-                                        <% if (funcionalidad.total_spent_hours && funcionalidad.total_spent_hours > 0) { %>
-                                            <%= parseFloat(funcionalidad.total_spent_hours).toFixed(2) %> hs
+                                        <% 
+                                        let horasTotales = 0;
+                                        if (typeof totalHorasDedicadas !== 'undefined' && totalHorasDedicadas > 0) {
+                                            horasTotales = totalHorasDedicadas;
+                                        } else if (funcionalidad.total_spent_hours && funcionalidad.total_spent_hours > 0) {
+                                            horasTotales = parseFloat(funcionalidad.total_spent_hours);
+                                        }
+                                        %>
+                                        <% if (horasTotales > 0) { %>
+                                            <%= horasTotales.toFixed(2) %> hs
                                         <% } else { %>
                                             Sin horas
                                         <% } %>
@@ -308,12 +369,24 @@
                         <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">
                             Interesados Reventa
                         </h2>
-                        <div class="client-tags-container">
+                        <div>
                             <% if (typeof reqClientesInteresados !== 'undefined' && reqClientesInteresados.length > 0) { %>
                                 <% reqClientesInteresados.forEach(reqCliente => { %>
-                                    <a href="/req-clientes/<%= reqCliente.redmine_id || reqCliente.id %>" class="client-tag" style="text-decoration: none; cursor: pointer;">
-                                        <%= reqCliente.titulo || 'Sin título' %>
-                                    </a>
+                                    <div style="margin-bottom: 16px; padding: 16px; background: white; border-radius: 8px; border: 1px solid var(--border-color); transition: all 0.2s;" onmouseover="this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
+                                        <a href="/req-clientes/<%= reqCliente.redmine_id || reqCliente.id %>" style="text-decoration: none; color: var(--text-primary); display: block;">
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                                                <% if (reqCliente.cliente || reqCliente.proyecto_completo) { %>
+                                                    <span class="client-tag" style="font-size: 12px; margin: 0;">
+                                                        <%= reqCliente.cliente || reqCliente.proyecto_completo %>
+                                                    </span>
+                                                    <span style="color: var(--text-secondary);">|</span>
+                                                <% } %>
+                                                <span style="font-weight: 500; color: var(--primary-color); font-size: 14px;">
+                                                    <%= reqCliente.titulo || 'Sin título' %>
+                                                </span>
+                                            </div>
+                                        </a>
+                                    </div>
                                 <% }) %>
                             <% } else { %>
                                 <span style="color: var(--text-secondary); font-style: italic;">Sin requerimientos de clientes interesados</span>
@@ -364,6 +437,7 @@
                             </div>
                         </div>
                     <% } %>
+                </div>
                 </div>
             </div>
         </div>
@@ -458,6 +532,115 @@
             } catch (error) {
                 console.error('Error al eliminar:', error);
                 alert('Error al eliminar: ' + error.message);
+            }
+        }
+        
+        async function actualizarEpics() {
+            const btnActualizar = document.getElementById('btnActualizar');
+            if (!btnActualizar) return;
+            
+            // Deshabilitar botón
+            btnActualizar.disabled = true;
+            btnActualizar.style.opacity = '0.6';
+            btnActualizar.style.cursor = 'not-allowed';
+            
+            // Mostrar popup de sincronización
+            mostrarPopupSincronizacion();
+            
+            try {
+                const response = await fetch(`/funcionalidades/${encodeURIComponent(redmineId)}/actualizar-epics`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Actualizar barra de progreso a 100%
+                    actualizarProgresoSincronizacion(100);
+                    // Esperar un momento y recargar
+                    setTimeout(() => {
+                        ocultarPopupSincronizacion();
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    ocultarPopupSincronizacion();
+                    alert('Error: ' + (data.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                ocultarPopupSincronizacion();
+                console.error('Error al actualizar epics:', error);
+                alert('Error al actualizar epics: ' + error.message);
+            } finally {
+                // Restaurar botón
+                btnActualizar.disabled = false;
+                btnActualizar.style.opacity = '1';
+                btnActualizar.style.cursor = 'pointer';
+            }
+        }
+        
+        // Funciones de popup de sincronización (copiadas de main.js)
+        function mostrarPopupSincronizacion() {
+            // Crear overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'syncOverlay';
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;';
+            
+            // Crear popup
+            const popup = document.createElement('div');
+            popup.id = 'syncPopup';
+            popup.style.cssText = 'background: white; border-radius: 12px; padding: 24px; min-width: 320px; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
+            
+            popup.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 16px; font-weight: 500; color: #202124; margin-bottom: 16px; font-family: 'Google Sans', 'Roboto', sans-serif;">
+                        Sincronizando
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #f1f3f4; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                        <div id="syncProgressBar" style="height: 100%; background: #0D5AA2; width: 0%; transition: width 0.3s ease; border-radius: 4px;"></div>
+                    </div>
+                    <div id="syncProgressText" style="font-size: 13px; color: #5f6368; font-family: 'Roboto', sans-serif;">
+                        0%
+                    </div>
+                </div>
+            `;
+            
+            overlay.appendChild(popup);
+            document.body.appendChild(overlay);
+            
+            // Simular progreso
+            let progreso = 0;
+            const intervalo = setInterval(() => {
+                progreso += Math.random() * 15;
+                if (progreso > 90) progreso = 90;
+                actualizarProgresoSincronizacion(progreso);
+            }, 200);
+            
+            // Guardar intervalo para limpiarlo después
+            overlay.dataset.intervalo = intervalo;
+        }
+        
+        function actualizarProgresoSincronizacion(porcentaje) {
+            const progressBar = document.getElementById('syncProgressBar');
+            const progressText = document.getElementById('syncProgressText');
+            if (progressBar) {
+                progressBar.style.width = porcentaje + '%';
+            }
+            if (progressText) {
+                progressText.textContent = Math.round(porcentaje) + '%';
+            }
+        }
+        
+        function ocultarPopupSincronizacion() {
+            const overlay = document.getElementById('syncOverlay');
+            if (overlay) {
+                // Limpiar intervalo si existe
+                if (overlay.dataset.intervalo) {
+                    clearInterval(parseInt(overlay.dataset.intervalo));
+                }
+                overlay.remove();
             }
         }
     </script>

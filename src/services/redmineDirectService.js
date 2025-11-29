@@ -191,6 +191,30 @@ function extraerCustomField(customFields, fieldKey) {
  */
 function mapearIssue(issue) {
     const proyectoCompleto = issue.project?.name || null;
+    const titulo = issue.subject || 'Sin título';
+    
+    // Truncar cliente desde titulo (no desde proyecto_completo)
+    // Ejemplos:
+    // "UT BH | Liquidación automática" -> "UT BH"
+    // "UT Petersen | Alta de cuentas comitentes vía APÍ- Sistema Nasdaq/Caja de Valores" -> "UT Petersen"
+    let cliente = null;
+    if (titulo && typeof titulo === 'string') {
+        const tituloTrimmed = titulo.trim();
+        if (tituloTrimmed.includes('|')) {
+            const partes = tituloTrimmed.split('|');
+            if (partes.length > 0 && partes[0].trim()) {
+                cliente = partes[0].trim();
+            }
+        } else if (tituloTrimmed) {
+            // Si no tiene "|", usar el título completo (limitado a 255 caracteres)
+            cliente = tituloTrimmed.substring(0, 255);
+        }
+    }
+    
+    // Log para debug si el cliente sigue siendo null después del mapeo
+    if (!cliente && titulo && titulo !== 'Sin título') {
+        console.log(`⚠️ No se pudo extraer cliente del título: "${titulo}"`);
+    }
     
     // Extraer custom fields
     const customFields = issue.custom_fields || [];
@@ -201,9 +225,10 @@ function mapearIssue(issue) {
         redmine_id: issue.id,
         
         // Datos básicos de Redmine (no editables)
-        titulo: issue.subject || 'Sin título',
+        titulo: titulo,
         descripcion: issue.description || null,
         proyecto_completo: proyectoCompleto,
+        cliente: cliente, // Cliente truncado desde titulo
         fecha_creacion: issue.created_on || null,
         fecha_real_finalizacion: fechaRealFinalizacion,
         total_spent_hours: issue.total_spent_hours || null
@@ -254,9 +279,20 @@ function mapearIssueReqClientes(issue) {
     const customFields = issue.custom_fields || [];
     const fechaRealFinalizacion = customFields.find(cf => cf.id === 15)?.value || null;
     
-    // Extraer cf_91 (Es Reventa) - normalizar valores vacíos a null
+    // Extraer cf_91 (Es Reventa) - normalizar valores vacíos a null y convertir 0/1 a "No"/"Si"
     const cf91Raw = customFields.find(cf => cf.id === 91)?.value;
-    const cf91 = (cf91Raw !== undefined && cf91Raw !== null && cf91Raw !== '') ? String(cf91Raw) : null;
+    let cf91 = null;
+    if (cf91Raw !== undefined && cf91Raw !== null && cf91Raw !== '') {
+        const valor = String(cf91Raw).trim();
+        // Convertir 0/1 a "No"/"Si"
+        if (valor === '0') {
+            cf91 = 'No';
+        } else if (valor === '1') {
+            cf91 = 'Si';
+        } else {
+            cf91 = valor; // Mantener otros valores como están
+        }
+    }
     
     // Extraer cf_92 (Proyecto Sponsor) - normalizar valores vacíos a null
     const cf92Raw = customFields.find(cf => cf.id === 92)?.value;
@@ -283,18 +319,32 @@ function mapearIssueReqClientes(issue) {
         }
     }
     
+    // Truncar cliente desde proyecto_completo
+    // Ejemplo: "UT Mercap | Mantenimiento" -> "UT Mercap"
+    let cliente = null;
+    if (proyectoCompleto) {
+        const partes = proyectoCompleto.split('|');
+        if (partes.length > 0) {
+            cliente = partes[0].trim();
+        } else {
+            cliente = proyectoCompleto.substring(0, 255); // Limitar a 255 caracteres
+        }
+    }
+    
     return {
         // ID del issue (único e inmutable)
         redmine_id: issue.id,
         
         // Datos básicos de Redmine (no editables)
         titulo: titulo,
+        descripcion: issue.description || null, // Descripción desde Redmine
         proyecto_completo: proyectoCompleto, // Proyecto completo (en lugar de Services ID)
+        cliente: cliente, // Cliente truncado
         fecha_creacion: issue.created_on || null,
         fecha_real_finalizacion: fechaRealFinalizacion,
         total_spent_hours: issue.total_spent_hours || null,
         estado_redmine: estadoRedmine, // Status.name
-        cf_91: cf91, // Es Reventa
+        cf_91: cf91, // Es Reventa (normalizado a "No"/"Si")
         cf_92: cf92 // Proyecto Sponsor
     };
 }
@@ -312,20 +362,37 @@ function normalizarReventa(valor) {
 }
 
 /**
- * Mapear proyecto Redmine -> registro redmine_issues (catálogo)
+ * Mapear proyecto Redmine -> registro redmine_funcionalidades (catálogo)
  */
 function mapearProyecto(proyecto) {
     const customFields = proyecto.custom_fields || [];
-    const cliente = extraerCustomField(customFields, REDMINE_CUSTOM_FIELD_CLIENTE_ID) || extraerCustomField(customFields, 'Cliente');
-    const sponsor = extraerCustomField(customFields, REDMINE_CUSTOM_FIELD_SPONSOR_ID) || extraerCustomField(customFields, 'Proyecto Sponsor');
     const reventa = extraerCustomField(customFields, REDMINE_CUSTOM_FIELD_REVENTA_ID) || extraerCustomField(customFields, 'Es Reventa');
+    
+    const titulo = proyecto.name || 'Sin título';
+    
+    // Truncar cliente desde titulo (nombre del proyecto)
+    // Ejemplos:
+    // "UT BH | Liquidación automática" -> "UT BH"
+    // "UT Petersen | Alta de cuentas comitentes vía APÍ- Sistema Nasdaq/Caja de Valores" -> "UT Petersen"
+    let cliente = null;
+    if (titulo && typeof titulo === 'string') {
+        const tituloTrimmed = titulo.trim();
+        if (tituloTrimmed.includes('|')) {
+            const partes = tituloTrimmed.split('|');
+            if (partes.length > 0 && partes[0].trim()) {
+                cliente = partes[0].trim();
+            }
+        } else if (tituloTrimmed) {
+            // Si no tiene "|", usar el título completo (limitado a 255 caracteres)
+            cliente = tituloTrimmed.substring(0, 255);
+        }
+    }
 
     return {
         redmine_id: proyecto.identifier || proyecto.id?.toString(),
-        titulo: proyecto.name || 'Sin título',
-        proyecto: cliente || 'Sin cliente',
+        titulo: titulo,
+        cliente: cliente, // Cliente truncado desde titulo (se usa como sponsor)
         fecha_creacion: proyecto.created_on || null,
-        sponsor: sponsor || null,
         reventa: normalizarReventa(reventa),
         total_spent_hours: null // No aplica para proyectos
     };
@@ -388,7 +455,7 @@ async function obtenerProyectos(options = {}) {
 }
 
 /**
- * Obtener proyectos mapeados listos para sincronizar con redmine_issues
+ * Obtener proyectos mapeados listos para sincronizar con redmine_funcionalidades
  */
 async function obtenerProyectosMapeados(options = {}) {
     const maxTotalSolicitado = options.limit ? parseInt(options.limit, 10) : null;

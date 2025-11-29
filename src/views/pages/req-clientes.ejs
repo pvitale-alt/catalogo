@@ -109,6 +109,19 @@
                     <span class="text-muted text-small">
                         <%= requerimientos.length %> requerimientos
                     </span>
+                    
+                    <% if (isAdmin) { %>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+                            <input 
+                                type="checkbox" 
+                                id="mostrarOcultosCheckbox"
+                                <%= filtros.mostrarOcultos ? 'checked' : '' %>
+                                onchange="toggleMostrarOcultos()"
+                                style="cursor: pointer; width: 18px; height: 18px;"
+                            />
+                            <span style="font-size: 13px; color: var(--text-secondary);">Mostrar ocultos</span>
+                        </label>
+                    <% } %>
                 </div>
             </div>
             
@@ -134,7 +147,10 @@
             <% } %>
             
             <!-- Contenido -->
-            <div class="content-area">
+            <div class="content-area" style="position: relative;">
+                <!-- Imagen de fondo con opacidad -->
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; opacity: 0.2; background-image: url('/images/cover.png'); background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none;"></div>
+                <div style="position: relative; z-index: 1;">
                 <% if (requerimientos.length === 0) { %>
                     <div class="empty-state">
                         <div class="empty-state-icon">📋</div>
@@ -154,12 +170,6 @@
                             <div class="desktop-only">
                                 <span>Proyecto</span>
                             </div>
-                            <div onclick="ordenar('seccion')" style="cursor: pointer;" data-sort="seccion">
-                                <span>Sección</span>
-                                <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M7 10l5 5 5-5z"/>
-                                </svg>
-                            </div>
                             <div class="desktop-only">
                                 <span>Reventa</span>
                             </div>
@@ -178,7 +188,13 @@
                         </div>
                         
                         <% requerimientos.forEach(requerimiento => { %>
-                            <div class="list-item req-clientes" onclick='verDetalle(<%- JSON.stringify(requerimiento.redmine_id || requerimiento.id) %>)'>
+                            <div 
+                                class="list-item req-clientes" 
+                                onclick='verDetalle(<%- JSON.stringify(requerimiento.redmine_id || requerimiento.id) %>)'
+                                <% if (isAdmin) { %>
+                                    oncontextmenu="event.preventDefault(); mostrarMenuContextual(event, <%- JSON.stringify(requerimiento.redmine_id || requerimiento.id) %>, <%= requerimiento.oculto ? 'true' : 'false' %>);"
+                                <% } %>
+                            >
                                 <div class="item-title">
                                     <div>
                                         <div><%= requerimiento.titulo || 'Sin título' %></div>
@@ -192,9 +208,8 @@
                                 <div class="item-text desktop-only">
                                     <%= requerimiento.proyecto_completo || '-' %>
                                 </div>
-                                <div class="item-text"><%= requerimiento.seccion || '-' %></div>
                                 <div class="item-text desktop-only">
-                                    <%= requerimiento.cf_91 || '-' %>
+                                    <%= (requerimiento.cf_91 === '1' || requerimiento.cf_91 === 1) ? 'Si' : (requerimiento.cf_91 === '0' || requerimiento.cf_91 === 0) ? 'No' : (requerimiento.cf_91 || '-') %>
                                 </div>
                                 <div class="item-text desktop-only">
                                     <%= requerimiento.estado_redmine || '-' %>
@@ -270,7 +285,8 @@
                     </div>
                 <% } %>
             </div>
-        </div>
+                </div>
+            </div>
         </div>
     
     <script src="/js/main.js"></script>
@@ -470,6 +486,97 @@
             } else {
                 params.delete('busqueda');
             }
+            window.location.search = params.toString();
+        }
+        // Menú contextual para ocultar req clientes (solo admin)
+        let menuContextual = null;
+        
+        function mostrarMenuContextual(event, redmineId, estaOculto) {
+            // Eliminar menú anterior si existe
+            if (menuContextual) {
+                menuContextual.remove();
+            }
+            
+            // Crear menú contextual
+            menuContextual = document.createElement('div');
+            menuContextual.style.cssText = `
+                position: fixed;
+                top: ${event.clientY}px;
+                left: ${event.clientX}px;
+                background: white;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                z-index: 10000;
+                min-width: 150px;
+                padding: 4px 0;
+            `;
+            
+            const opcion = document.createElement('div');
+            opcion.style.cssText = `
+                padding: 10px 16px;
+                cursor: pointer;
+                font-size: 14px;
+                color: var(--text-primary);
+                transition: background 0.2s;
+            `;
+            opcion.textContent = estaOculto ? 'Mostrar' : 'Ocultar';
+            opcion.onmouseover = () => opcion.style.background = '#f1f3f4';
+            opcion.onmouseout = () => opcion.style.background = 'white';
+            opcion.onclick = () => {
+                ocultarReqCliente(redmineId, !estaOculto);
+                menuContextual.remove();
+                menuContextual = null;
+            };
+            
+            menuContextual.appendChild(opcion);
+            document.body.appendChild(menuContextual);
+            
+            // Cerrar menú al hacer click fuera
+            const cerrarMenu = (e) => {
+                if (menuContextual && !menuContextual.contains(e.target)) {
+                    menuContextual.remove();
+                    menuContextual = null;
+                    document.removeEventListener('click', cerrarMenu);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', cerrarMenu), 0);
+        }
+        
+        async function ocultarReqCliente(redmineId, oculto) {
+            try {
+                const response = await fetch(`/req-clientes/${redmineId}/ocultar`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ oculto })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Recargar la página para reflejar los cambios
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'No se pudo ocultar/mostrar el requerimiento'));
+                }
+            } catch (error) {
+                console.error('Error al ocultar/mostrar requerimiento:', error);
+                alert('Error al ocultar/mostrar el requerimiento');
+            }
+        }
+        
+        function toggleMostrarOcultos() {
+            const checkbox = document.getElementById('mostrarOcultosCheckbox');
+            const params = new URLSearchParams(window.location.search);
+            
+            if (checkbox.checked) {
+                params.set('mostrarOcultos', 'true');
+            } else {
+                params.delete('mostrarOcultos');
+            }
+            
             window.location.search = params.toString();
         }
     </script>

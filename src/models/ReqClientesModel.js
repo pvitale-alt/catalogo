@@ -21,6 +21,11 @@ class ReqClientesModel {
             const params = [];
             let paramCount = 1;
 
+            // Filtrar por oculto: por defecto no mostrar ocultos, a menos que mostrarOcultos esté activado
+            if (!filtros.mostrarOcultos) {
+                query += ` AND (COALESCE(v.oculto, FALSE) = FALSE)`;
+            }
+
             if (filtros.busqueda) {
                 query += ` AND (
                     v.titulo ILIKE $${paramCount} OR 
@@ -241,6 +246,44 @@ class ReqClientesModel {
             return result.rows;
         } catch (error) {
             console.error('Error al obtener requerimientos por sponsor:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Ocultar o mostrar un requerimiento de cliente
+     * @param {number} redmine_id - ID del issue en Redmine
+     * @param {boolean} oculto - true para ocultar, false para mostrar
+     * @returns {Promise<Object>} - Requerimiento actualizado
+     */
+    static async ocultar(redmine_id, oculto) {
+        try {
+            // Primero verificar si existe el registro en req_clientes
+            const existeQuery = `SELECT id FROM req_clientes WHERE redmine_id = $1`;
+            const existeResult = await pool.query(existeQuery, [redmine_id]);
+            
+            if (existeResult.rows.length === 0) {
+                // Si no existe, crear el registro
+                const insertQuery = `
+                    INSERT INTO req_clientes (redmine_id, oculto)
+                    VALUES ($1, $2)
+                    RETURNING *
+                `;
+                const insertResult = await pool.query(insertQuery, [redmine_id, oculto]);
+                return insertResult.rows[0];
+            } else {
+                // Si existe, actualizar
+                const updateQuery = `
+                    UPDATE req_clientes
+                    SET oculto = $1, updated_at = CURRENT_TIMESTAMP
+                    WHERE redmine_id = $2
+                    RETURNING *
+                `;
+                const updateResult = await pool.query(updateQuery, [oculto, redmine_id]);
+                return updateResult.rows[0];
+            }
+        } catch (error) {
+            console.error('Error al ocultar/mostrar requerimiento:', error);
             throw error;
         }
     }

@@ -20,7 +20,10 @@
         
         <div class="main-content">
             <!-- Contenido -->
-            <div class="content-area" style="padding-top: 0;">
+            <div class="content-area" style="padding-top: 0; position: relative;">
+                <!-- Imagen de fondo con opacidad -->
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; opacity: 0.2; background-image: url('/images/cover.png'); background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none;"></div>
+                <div style="position: relative; z-index: 1;">
                 <div class="empty-state" style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
                     <div class="empty-state-icon" style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">
                         💡
@@ -31,6 +34,7 @@
                     <div class="empty-state-subtext" style="font-size: 16px; color: var(--text-secondary); max-width: 500px; margin: 0 auto;">
                         Esta sección está en desarrollo. Pronto podrás gestionar ideas y mejoras aquí.
                     </div>
+                </div>
                 </div>
             </div>
         </div>

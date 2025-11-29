@@ -54,7 +54,7 @@ async function sincronizarRedmine(project_id = null, tracker_id = null, maxTotal
 
         console.log(`✅ ${proyectosMapeados.length} proyectos obtenidos de Redmine\n`);
 
-        // 2. Insertar/actualizar en redmine_issues
+        // 2. Insertar/actualizar en redmine_funcionalidades
         console.log('💾 Paso 2: Guardando proyectos en la base de datos...');
         
         let insertados = 0;
@@ -63,16 +63,15 @@ async function sincronizarRedmine(project_id = null, tracker_id = null, maxTotal
         for (const proyecto of proyectosMapeados) {
             try {
                 const result = await query(`
-                    INSERT INTO redmine_issues (
-                        redmine_id, titulo, proyecto, fecha_creacion, sponsor, reventa, 
+                    INSERT INTO redmine_funcionalidades (
+                        redmine_id, titulo, cliente, fecha_creacion, reventa, 
                         total_spent_hours, sincronizado_en
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+                    ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
                     ON CONFLICT (redmine_id) 
                     DO UPDATE SET
                         titulo = EXCLUDED.titulo,
-                        proyecto = EXCLUDED.proyecto,
+                        cliente = EXCLUDED.cliente,
                         fecha_creacion = EXCLUDED.fecha_creacion,
-                        sponsor = EXCLUDED.sponsor,
                         reventa = EXCLUDED.reventa,
                         total_spent_hours = EXCLUDED.total_spent_hours,
                         sincronizado_en = CURRENT_TIMESTAMP
@@ -80,12 +79,18 @@ async function sincronizarRedmine(project_id = null, tracker_id = null, maxTotal
                 `, [
                     proyecto.redmine_id,
                     proyecto.titulo,
-                    proyecto.proyecto,
+                    proyecto.cliente || null, // Cliente truncado desde titulo (ya viene del mapeo)
                     proyecto.fecha_creacion,
-                    proyecto.sponsor,
                     proyecto.reventa,
                     proyecto.total_spent_hours
                 ]);
+                
+                // Log para debug: verificar que el cliente se esté guardando
+                if (!proyecto.cliente && proyecto.titulo && proyecto.titulo !== 'Sin título') {
+                    console.log(`⚠️ Cliente nulo para redmine_id ${proyecto.redmine_id}, título: "${proyecto.titulo}"`);
+                } else if (proyecto.cliente) {
+                    console.log(`✅ Cliente extraído: "${proyecto.cliente}" del título: "${proyecto.titulo}"`);
+                }
 
                 // xmax = 0 significa que fue INSERT, xmax != 0 significa UPDATE
                 if (result.rows[0].inserted) {
@@ -114,7 +119,7 @@ async function sincronizarRedmine(project_id = null, tracker_id = null, maxTotal
             SELECT 
                 r.redmine_id,
                 r.titulo
-            FROM redmine_issues r
+            FROM redmine_funcionalidades r
             WHERE NOT EXISTS (
                 SELECT 1 FROM funcionalidades f WHERE f.redmine_id = r.redmine_id
             )
@@ -136,7 +141,7 @@ async function sincronizarRedmine(project_id = null, tracker_id = null, maxTotal
         return {
             success: true,
             message: 'Sincronización completada exitosamente',
-            redmine_issues: {
+            redmine_funcionalidades: {
                 insertados,
                 actualizados,
                 total: proyectosMapeados.length
@@ -329,7 +334,7 @@ async function obtenerEstadoSincronizacion() {
                 COUNT(DISTINCT proyecto) as total_proyectos,
                 COUNT(CASE WHEN estado_cerrado = false THEN 1 END) as issues_abiertos,
                 COUNT(CASE WHEN estado_cerrado = true THEN 1 END) as issues_cerrados
-            FROM redmine_issues
+            FROM redmine_funcionalidades
         `);
 
         const funcResult = await query(`
@@ -342,7 +347,7 @@ async function obtenerEstadoSincronizacion() {
 
         return {
             success: true,
-            redmine_issues: result.rows[0],
+            redmine_funcionalidades: result.rows[0],
             funcionalidades: funcResult.rows[0]
         };
     } catch (error) {
@@ -410,7 +415,7 @@ async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
 
         // 2. Insertar/actualizar en redmine_req_clientes
         console.log('💾 Paso 2: Guardando issues en la base de datos...');
-        console.log('   ⚠️ Validando que proyecto_completo no exista en redmine_issues...\n');
+        console.log('   ⚠️ Validando que proyecto_completo no exista en redmine_funcionalidades...\n');
         
         let insertados = 0;
         let actualizados = 0;
@@ -425,16 +430,16 @@ async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
                     continue;
                 }
                 
-                // Validar 2: Omitir si el proyecto_completo existe en redmine_issues.titulo (funcionalidades)
+                // Validar 2: Omitir si el proyecto_completo existe en redmine_funcionalidades.titulo (funcionalidades)
                 if (issue.proyecto_completo) {
                     const validacion = await query(`
                         SELECT COUNT(*) as existe
-                        FROM redmine_issues
+                        FROM redmine_funcionalidades
                         WHERE titulo = $1
                     `, [issue.proyecto_completo]);
                     
                     if (parseInt(validacion.rows[0].existe) > 0) {
-                        console.log(`   ⚠️ Omitiendo issue ${issue.redmine_id}: proyecto_completo "${issue.proyecto_completo}" ya existe en redmine_issues (funcionalidades)`);
+                        console.log(`   ⚠️ Omitiendo issue ${issue.redmine_id}: proyecto_completo "${issue.proyecto_completo}" ya existe en redmine_funcionalidades (funcionalidades)`);
                         omitidos++;
                         continue;
                     }
@@ -447,14 +452,16 @@ async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
                 
                 const result = await query(`
                     INSERT INTO redmine_req_clientes (
-                        redmine_id, titulo, proyecto_completo, fecha_creacion, 
+                        redmine_id, titulo, descripcion, proyecto_completo, cliente, fecha_creacion, 
                         fecha_real_finalizacion, total_spent_hours, estado_redmine, 
                         cf_91, cf_92, sincronizado_en
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
                     ON CONFLICT (redmine_id) 
                     DO UPDATE SET
                         titulo = EXCLUDED.titulo,
+                        descripcion = EXCLUDED.descripcion,
                         proyecto_completo = EXCLUDED.proyecto_completo,
+                        cliente = EXCLUDED.cliente,
                         fecha_creacion = EXCLUDED.fecha_creacion,
                         fecha_real_finalizacion = EXCLUDED.fecha_real_finalizacion,
                         total_spent_hours = EXCLUDED.total_spent_hours,
@@ -466,7 +473,9 @@ async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
                 `, [
                     issue.redmine_id,
                     issue.titulo,
+                    issue.descripcion || null,
                     issue.proyecto_completo,
+                    issue.cliente || null,
                     issue.fecha_creacion,
                     issue.fecha_real_finalizacion,
                     issue.total_spent_hours,
@@ -486,11 +495,11 @@ async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
             }
         }
 
-        console.log(`✅ Issues guardados: ${insertados} insertados, ${actualizados} actualizados, ${omitidos} omitidos (proyecto_completo existe en redmine_issues)\n`);
+        console.log(`✅ Issues guardados: ${insertados} insertados, ${actualizados} actualizados, ${omitidos} omitidos (proyecto_completo existe en redmine_funcionalidades)\n`);
 
         // 3. Crear requerimientos para issues nuevos
         console.log('🔄 Paso 3: Creando requerimientos de clientes para issues nuevos...');
-        console.log('   ⚠️ Validando nuevamente que proyecto_completo no exista en redmine_issues...\n');
+        console.log('   ⚠️ Validando nuevamente que proyecto_completo no exista en redmine_funcionalidades...\n');
         
         const syncResult = await query(`
             INSERT INTO req_clientes (
@@ -505,7 +514,7 @@ async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
                 SELECT 1 FROM req_clientes b WHERE b.redmine_id = r.redmine_id
             )
             AND NOT EXISTS (
-                SELECT 1 FROM redmine_issues ri 
+                SELECT 1 FROM redmine_funcionalidades ri 
                 WHERE ri.titulo = r.proyecto_completo 
                 AND r.proyecto_completo IS NOT NULL
             )

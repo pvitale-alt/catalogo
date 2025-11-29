@@ -17,7 +17,8 @@ exports.index = async (req, res) => {
             sponsor: req.query.sponsor || '',
             sponsors: req.query.sponsors ? (Array.isArray(req.query.sponsors) ? req.query.sponsors : [req.query.sponsors]) : [],
             orden: req.query.orden || 'score_total',
-            direccion: req.query.direccion || 'desc'
+            direccion: req.query.direccion || 'desc',
+            mostrarOcultos: req.query.mostrarOcultos === 'true' || req.query.mostrarOcultos === true
         };
         
         const vista = req.query.vista || 'lista';
@@ -61,9 +62,26 @@ exports.detalle = async (req, res) => {
             });
         }
         
+        // Buscar funcionalidad por sponsor (cf_92) si existe
+        let funcionalidadSponsor = null;
+        if (requerimiento.cf_92) {
+            try {
+                const FuncionalidadModel = require('../models/FuncionalidadModel');
+                funcionalidadSponsor = await FuncionalidadModel.obtenerPorSponsor(requerimiento.cf_92);
+                if (funcionalidadSponsor) {
+                    console.log(`✅ Funcionalidad encontrada para sponsor "${requerimiento.cf_92}": redmine_id=${funcionalidadSponsor.redmine_id}`);
+                } else {
+                    console.log(`⚠️ No se encontró funcionalidad para sponsor "${requerimiento.cf_92}"`);
+                }
+            } catch (error) {
+                console.error('Error al buscar funcionalidad por sponsor:', error);
+            }
+        }
+        
         res.render('pages/req-cliente-detalle', {
             title: requerimiento.titulo,
             requerimiento,
+            funcionalidadSponsor, // Funcionalidad encontrada por sponsor
             activeMenu: 'req-clientes',
             isAdmin: req.isAdmin || false,
             redmineBaseUrl: buildRedmineBaseUrl()
@@ -216,6 +234,43 @@ exports.eliminar = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error al eliminar el requerimiento de cliente'
+        });
+    }
+};
+
+/**
+ * Ocultar o mostrar un requerimiento de cliente
+ */
+exports.ocultar = async (req, res) => {
+    try {
+        if (!req.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                error: 'Solo administradores pueden ocultar requerimientos'
+            });
+        }
+
+        const { id } = req.params;
+        const { oculto } = req.body;
+
+        if (typeof oculto !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                error: 'El campo oculto debe ser un booleano'
+            });
+        }
+
+        await ReqClientesModel.ocultar(id, oculto);
+
+        res.json({
+            success: true,
+            message: oculto ? 'Requerimiento ocultado exitosamente' : 'Requerimiento mostrado exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al ocultar/mostrar requerimiento:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al ocultar/mostrar el requerimiento'
         });
     }
 };

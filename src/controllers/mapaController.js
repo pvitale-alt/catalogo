@@ -9,6 +9,21 @@ exports.index = async (req, res) => {
         const estadisticas = await MapaModel.obtenerEstadisticas();
         const topFuncionalidades = await MapaModel.obtenerTopFuncionalidades(5);
         
+        // Si es admin, obtener todos los clientes con sus cliente_redmine
+        let clientesConRedmine = [];
+        if (req.isAdmin) {
+            const todosLosClientes = await MapaModel.obtenerTodosLosClientes();
+            clientesConRedmine = await Promise.all(
+                todosLosClientes.map(async (cliente) => {
+                    const clienteRedmine = await MapaModel.obtenerClienteRedminePorCliente(cliente.id);
+                    return {
+                        ...cliente,
+                        cliente_redmine: clienteRedmine
+                    };
+                })
+            );
+        }
+        
         res.render('pages/mapa', {
             title: 'Clientes',
             clientes: mapa.clientes,
@@ -16,7 +31,9 @@ exports.index = async (req, res) => {
             relaciones: mapa.relaciones,
             estadisticas,
             topFuncionalidades,
-            activeMenu: 'mapa'
+            activeMenu: 'mapa',
+            isAdmin: req.isAdmin || false,
+            clientesConRedmine: clientesConRedmine
         });
     } catch (error) {
         console.error('Error al cargar mapa:', error);
@@ -173,6 +190,85 @@ exports.obtenerClientes = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error al obtener los clientes'
+        });
+    }
+};
+
+/**
+ * Obtener clientes Redmine únicos
+ */
+exports.obtenerClientesRedmine = async (req, res) => {
+    try {
+        const clientesRedmine = await MapaModel.obtenerClientesRedmine();
+        
+        res.json({
+            success: true,
+            clientesRedmine
+        });
+    } catch (error) {
+        console.error('Error al obtener clientes Redmine:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener los clientes Redmine'
+        });
+    }
+};
+
+/**
+ * Obtener cliente_redmine de un cliente
+ */
+exports.obtenerClienteRedmine = async (req, res) => {
+    try {
+        const { clienteId } = req.params;
+        const clientesRedmine = await MapaModel.obtenerClienteRedminePorCliente(clienteId);
+        
+        res.json({
+            success: true,
+            clientesRedmine
+        });
+    } catch (error) {
+        console.error('Error al obtener cliente_redmine:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener los cliente_redmine'
+        });
+    }
+};
+
+/**
+ * Actualizar cliente_redmine de un cliente
+ */
+exports.actualizarClienteRedmine = async (req, res) => {
+    try {
+        if (!req.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                error: 'Solo administradores pueden actualizar cliente_redmine'
+            });
+        }
+
+        const { clienteId } = req.params;
+        const { clientesRedmine } = req.body;
+
+        if (!Array.isArray(clientesRedmine)) {
+            return res.status(400).json({
+                success: false,
+                error: 'clientesRedmine debe ser un array'
+            });
+        }
+
+        const resultado = await MapaModel.actualizarClienteRedmine(clienteId, clientesRedmine);
+        
+        res.json({
+            success: true,
+            clientesRedmine: resultado,
+            message: 'Cliente Redmine actualizado exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al actualizar cliente_redmine:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al actualizar cliente_redmine'
         });
     }
 };

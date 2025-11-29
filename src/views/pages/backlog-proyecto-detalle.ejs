@@ -18,8 +18,10 @@
     <div class="app-container" style="margin-top: 0;">
         <%- include('../partials/sidebar', { activeMenu: 'proyectos-internos' }) %>
         
-        <div class="main-content">
-            <div class="content-area">
+        <div class="main-content" style="position: relative;">
+            <!-- Imagen de fondo con opacidad -->
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; opacity: 0.2; background-image: url('/images/cover.png'); background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none;"></div>
+            <div class="content-area" style="position: relative; z-index: 1;">
                 <!-- Botón volver -->
                 <div style="margin-bottom: 24px;">
                     <button onclick="history.back()" class="button button-secondary">
@@ -99,7 +101,7 @@
                                     </svg>
                                     <span id="btnEditarTexto">Editar</span>
                                 </button>
-                                <button onclick='window.location.href="/score/calculadora/" + encodeURIComponent(<%- JSON.stringify(proyecto.redmine_id || proyecto.id) %>)' class="button">
+                                <button onclick='window.location.href="/score/calculadora/" + encodeURIComponent(String(<%= proyecto.redmine_id || proyecto.id || "" %>))' class="button">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
@@ -244,6 +246,8 @@
                             </div>
                         </div>
                     <% } %>
+                </div>
+            </div>
                 </div>
             </div>
         </div>

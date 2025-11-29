@@ -719,10 +719,10 @@ select.btn:focus {
     grid-template-columns: 2fr 150px 100px 100px 100px 120px 80px;
 }
 
-/* Grid específico para requerimientos de clientes (con Proyecto antes de Sección) */
+/* Grid específico para requerimientos de clientes (sin Sección) */
 .req-clientes.list-header,
 .req-clientes.list-item {
-    grid-template-columns: 2fr 220px 150px 100px 120px 120px 80px; /* Título, Proyecto, Sección, Reventa, Estado, Redmine, Score */
+    grid-template-columns: 2fr 300px 100px 120px 120px 80px; /* Título, Proyecto, Reventa, Estado, Redmine, Score */
 }
 
 /* Asegurar que todos los divs respeten el ancho del grid */
@@ -918,16 +918,17 @@ select.btn:focus {
 .list-item > .item-text:nth-child(3),
 .list-item > .sponsor-cell {
     width: 100px;
-    max-width: 100px;
+    min-width: 100px;
+    max-width: 150px;
     font-size: 12px;
     text-align: center !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: visible;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    padding: 4px 8px;
     margin: 0;
 }
 

@@ -18,8 +18,10 @@
     <div class="app-container" style="margin-top: 0;">
         <%- include('../partials/sidebar', { activeMenu: 'req-clientes' }) %>
         
-        <div class="main-content">
-            <div class="content-area">
+        <div class="main-content" style="position: relative;">
+            <!-- Imagen de fondo con opacidad -->
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; opacity: 0.2; background-image: url('/images/cover.png'); background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none;"></div>
+            <div class="content-area" style="position: relative; z-index: 1;">
                 <!-- Botón volver -->
                 <div style="margin-bottom: 24px;">
                     <button onclick="history.back()" class="button button-secondary">
@@ -91,7 +93,7 @@
                                     </svg>
                                     <span id="btnEditarTexto">Editar</span>
                                 </button>
-                                <button onclick='window.location.href="/score/calculadora/" + encodeURIComponent(<%- JSON.stringify(requerimiento.redmine_id || requerimiento.id) %>)' class="button">
+                                <button onclick='window.location.href="/score/calculadora/" + encodeURIComponent(String(<%= requerimiento.redmine_id || requerimiento.id || "" %>))' class="button">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
@@ -106,8 +108,8 @@
                         <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">
                             Descripción
                         </h2>
-                        <div id="descripcionView" style="color: var(--text-secondary); line-height: 1.6;">
-                            <%= requerimiento.descripcion || 'Sin descripción' %>
+                        <div id="descripcionView" style="margin-top: 8px; color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+                            <%= requerimiento.descripcion_redmine || requerimiento.descripcion || 'Sin descripción' %>
                         </div>
                         <div id="descripcionEdit" style="display: none;">
                             <textarea 
@@ -117,15 +119,15 @@
                                 placeholder="Ingrese la descripción del requerimiento..."
                                 onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'; this.style.background='white'"
                                 onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'; this.style.background='#f8f9fa'"
-                            ><%= requerimiento.descripcion || '' %></textarea>
+                            ><%= requerimiento.descripcion || requerimiento.descripcion_redmine || '' %></textarea>
                         </div>
                     </div>
                     
                     <!-- Información general -->
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 32px; max-width: 1200px; margin-left: auto; margin-right: auto; align-items: start;">
-                        <!-- Columna 1: Sección -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; max-width: 1200px; margin-left: auto; margin-right: auto; align-items: start;">
+                        <!-- Columna 1: Sección, Fecha de creación, Estado -->
                         <div>
-                            <div style="min-height: 60px;">
+                            <div style="min-height: 60px; margin-bottom: 24px;">
                                 <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
                                     Sección
                                 </div>
@@ -153,45 +155,6 @@
                                     </select>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Columna 2: Reventa, Sponsor, Fecha de creación, Estado -->
-                        <div>
-                            <% if (requerimiento.cf_91) { %>
-                                <div style="min-height: 60px; margin-bottom: 24px;">
-                                    <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
-                                        Reventa
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                                        </svg>
-                                        <span style="font-weight: 500; color: var(--text-primary);">
-                                            <%= requerimiento.cf_91 %>
-                                        </span>
-                                    </div>
-                                </div>
-                            <% } else { %>
-                                <div style="min-height: 60px; margin-bottom: 24px;"></div>
-                            <% } %>
-                            
-                            <% if (requerimiento.cf_92) { %>
-                                <div style="min-height: 60px; margin-bottom: 24px;">
-                                    <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
-                                        Sponsor
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                                        </svg>
-                                        <span style="font-weight: 500; color: var(--text-primary);">
-                                            <%= requerimiento.cf_92 %>
-                                        </span>
-                                    </div>
-                                </div>
-                            <% } else { %>
-                                <div style="min-height: 60px; margin-bottom: 24px;"></div>
-                            <% } %>
                             
                             <% if (requerimiento.fecha_creacion) { %>
                                 <div style="min-height: 60px; margin-bottom: 24px;">
@@ -225,6 +188,105 @@
                                         </span>
                                     </div>
                                 </div>
+                            <% } %>
+                        </div>
+                        
+                        <!-- Columna 2: Reventa, Sponsor, Cliente, Proyecto completo -->
+                        <div>
+                            <div style="min-height: 60px; margin-bottom: 24px;">
+                                <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
+                                    Reventa
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                    </svg>
+                                    <span style="font-weight: 500; color: var(--text-primary);">
+                                        <%= (requerimiento.cf_91 === '1' || requerimiento.cf_91 === 1 || requerimiento.cf_91 === 'Si') ? 'Si' : (requerimiento.cf_91 === '0' || requerimiento.cf_91 === 0 || requerimiento.cf_91 === 'No') ? 'No' : (requerimiento.cf_91 || '-') %>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div style="min-height: 60px; margin-bottom: 24px;">
+                                <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
+                                    Sponsor
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                    </svg>
+                                    <% if (requerimiento.cf_92) { %>
+                                        <% if (typeof funcionalidadSponsor !== 'undefined' && funcionalidadSponsor && funcionalidadSponsor.redmine_id) { %>
+                                            <a href="/funcionalidades/<%= funcionalidadSponsor.redmine_id %>" style="font-weight: 500; color: var(--primary-color); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#0A4887'" onmouseout="this.style.color='var(--primary-color)'">
+                                                <%= requerimiento.cf_92 %>
+                                            </a>
+                                        <% } else { %>
+                                            <span style="font-weight: 500; color: var(--text-primary);">
+                                                <%= requerimiento.cf_92 %>
+                                            </span>
+                                        <% } %>
+                                    <% } else { %>
+                                        <span style="font-weight: 500; color: var(--text-secondary);">-</span>
+                                    <% } %>
+                                </div>
+                            </div>
+                            
+                            <% if (requerimiento.cliente) { %>
+                                <div style="min-height: 60px; margin-bottom: 24px;">
+                                    <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
+                                        Cliente
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
+                                            <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                                        </svg>
+                                        <span style="font-weight: 500; color: var(--text-primary);">
+                                            <%= requerimiento.cliente %>
+                                        </span>
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div style="min-height: 60px; margin-bottom: 24px;"></div>
+                            <% } %>
+                            
+                        </div>
+                        
+                        <!-- Columna 3: Fecha real finalización, Total spent hours -->
+                        <div>
+                            <% if (requerimiento.fecha_real_finalizacion) { %>
+                                <div style="min-height: 60px; margin-bottom: 24px;">
+                                    <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
+                                        Fecha real finalización
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
+                                            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                                        </svg>
+                                        <span style="font-weight: 500; color: var(--text-primary);">
+                                            <%= requerimiento.fecha_real_finalizacion %>
+                                        </span>
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div style="min-height: 60px; margin-bottom: 24px;"></div>
+                            <% } %>
+                            
+                            <% if (requerimiento.total_spent_hours) { %>
+                                <div style="min-height: 60px;">
+                                    <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
+                                        Total horas trabajadas
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
+                                            <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                                        </svg>
+                                        <span style="font-weight: 500; color: var(--text-primary);">
+                                            <%= parseFloat(requerimiento.total_spent_hours).toFixed(2) %> hs
+                                        </span>
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div style="min-height: 60px;"></div>
                             <% } %>
                         </div>
                     </div>
@@ -272,6 +334,8 @@
                             </div>
                         </div>
                     <% } %>
+                </div>
+            </div>
                 </div>
             </div>
         </div>

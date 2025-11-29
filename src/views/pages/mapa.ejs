@@ -20,7 +20,10 @@
         
         <div class="main-content">
             <!-- Contenido -->
-            <div class="content-area" style="padding-top: 0;">
+            <div class="content-area" style="padding-top: 0; position: relative;">
+                <!-- Imagen de fondo con opacidad -->
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; opacity: 0.2; background-image: url('/images/cover.png'); background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none;"></div>
+                <div style="position: relative; z-index: 1;">
                 
                 <!-- Contenedor con scroll horizontal y flechas -->
                 <div style="position: relative;">
@@ -164,6 +167,61 @@
                     </table>
                     </div>
                 </div>
+                
+                <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                    <!-- Panel de gestión de Cliente Redmine (solo admin) -->
+                    <div style="margin-top: 32px; background: white; border-radius: 12px; box-shadow: var(--shadow); padding: 24px;">
+                        <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px; color: var(--text-primary);">
+                            Gestión de Cliente Redmine
+                        </h2>
+                        <div style="display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;">
+                            <!-- Lista de Clientes de la Web -->
+                            <div style="flex: 1; min-width: 250px;">
+                                <label style="display: block; font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px;">
+                                    Cliente (Web)
+                                </label>
+                                <select id="selectClienteWeb" style="width: 100%; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; cursor: pointer;" onchange="cargarClienteRedmineDelCliente()">
+                                    <option value="">Seleccionar cliente...</option>
+                                    <% if (typeof clientesConRedmine !== 'undefined' && clientesConRedmine.length > 0) { %>
+                                        <% clientesConRedmine.forEach(cliente => { %>
+                                            <option value="<%= cliente.id %>"><%= cliente.nombre %></option>
+                                        <% }) %>
+                                    <% } %>
+                                </select>
+                            </div>
+                            
+                            <!-- Lista de Cliente Redmine -->
+                            <div style="flex: 1; min-width: 250px;">
+                                <label style="display: block; font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px;">
+                                    Cliente Redmine
+                                </label>
+                                <select id="selectClienteRedmine" style="width: 100%; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; cursor: pointer;">
+                                    <option value="">Seleccionar cliente Redmine...</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Botones -->
+                            <div style="display: flex; gap: 8px; align-items: flex-end;">
+                                <button onclick="agregarRelacionClienteRedmine()" class="button" style="padding: 10px 20px; font-size: 14px;">
+                                    Agregar
+                                </button>
+                                <button onclick="eliminarRelacionClienteRedmine()" class="button button-secondary" style="padding: 10px 20px; font-size: 14px;">
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Lista de relaciones actuales -->
+                        <div id="relacionesClienteRedmine" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+                            <div style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 12px;">
+                                Relaciones actuales:
+                            </div>
+                            <div id="listaRelaciones" style="display: flex; flex-direction: column; gap: 8px;">
+                                <!-- Se llenará dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
                 
                 <!-- Métricas y Gráficos -->
                 <div style="margin-top: 32px;">
@@ -545,6 +603,8 @@
                     });
                 </script>
             </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -732,6 +792,185 @@
             document.removeEventListener('mousemove', doResize);
             document.removeEventListener('mouseup', stopResize);
         }
+
+        // Gestión de Cliente Redmine (solo admin)
+        <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+            let clientesRedmineDisponibles = [];
+            let relacionesActuales = {};
+
+            // Cargar clientes Redmine disponibles al iniciar
+            async function cargarClientesRedmine() {
+                try {
+                    const response = await fetch('/mapa/clientes-redmine');
+                    const data = await response.json();
+                    if (data.success) {
+                        clientesRedmineDisponibles = data.clientesRedmine;
+                        const select = document.getElementById('selectClienteRedmine');
+                        if (select) {
+                            select.innerHTML = '<option value="">Seleccionar cliente Redmine...</option>';
+                            clientesRedmineDisponibles.forEach(cr => {
+                                const option = document.createElement('option');
+                                option.value = cr;
+                                option.textContent = cr;
+                                select.appendChild(option);
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error al cargar clientes Redmine:', error);
+                }
+            }
+
+            // Cargar relaciones actuales de un cliente
+            async function cargarClienteRedmineDelCliente() {
+                const selectCliente = document.getElementById('selectClienteWeb');
+                const clienteId = selectCliente.value;
+                
+                if (!clienteId) {
+                    document.getElementById('listaRelaciones').innerHTML = '';
+                    relacionesActuales = {};
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/mapa/clientes/${clienteId}/cliente-redmine`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        relacionesActuales[clienteId] = data.clientesRedmine || [];
+                        actualizarListaRelaciones();
+                    }
+                } catch (error) {
+                    console.error('Error al cargar cliente Redmine del cliente:', error);
+                }
+            }
+
+            // Actualizar lista de relaciones
+            function actualizarListaRelaciones() {
+                const selectCliente = document.getElementById('selectClienteWeb');
+                const clienteId = selectCliente.value;
+                const lista = document.getElementById('listaRelaciones');
+                
+                if (!clienteId || !relacionesActuales[clienteId] || relacionesActuales[clienteId].length === 0) {
+                    lista.innerHTML = '<div style="color: var(--text-secondary); font-style: italic; padding: 12px;">Sin relaciones</div>';
+                    return;
+                }
+
+                lista.innerHTML = relacionesActuales[clienteId].map(cr => `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <span style="font-size: 14px; color: var(--text-primary);">${cr}</span>
+                        <button onclick="eliminarRelacionClienteRedmine('${cr.replace(/'/g, "\\'")}')" style="background: none; border: none; cursor: pointer; padding: 4px 8px; color: #d93025; font-size: 16px; font-weight: bold;" title="Eliminar">×</button>
+                    </div>
+                `).join('');
+            }
+
+            // Agregar relación
+            async function agregarRelacionClienteRedmine() {
+                const selectCliente = document.getElementById('selectClienteWeb');
+                const selectClienteRedmine = document.getElementById('selectClienteRedmine');
+                const clienteId = selectCliente.value;
+                const clienteRedmine = selectClienteRedmine.value.trim();
+                
+                if (!clienteId) {
+                    alert('Por favor selecciona un cliente');
+                    return;
+                }
+                
+                if (!clienteRedmine) {
+                    alert('Por favor selecciona un cliente Redmine');
+                    return;
+                }
+
+                try {
+                    // Obtener relaciones actuales
+                    const clientesRedmineActuales = relacionesActuales[clienteId] || [];
+                    
+                    // Verificar si ya existe
+                    if (clientesRedmineActuales.includes(clienteRedmine)) {
+                        alert('Esta relación ya existe');
+                        return;
+                    }
+                    
+                    // Agregar el nuevo
+                    clientesRedmineActuales.push(clienteRedmine);
+                    
+                    // Actualizar
+                    const updateResponse = await fetch(`/mapa/clientes/${clienteId}/cliente-redmine`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            clientesRedmine: clientesRedmineActuales
+                        })
+                    });
+                    
+                    const updateData = await updateResponse.json();
+                    
+                    if (updateData.success) {
+                        relacionesActuales[clienteId] = updateData.clientesRedmine;
+                        actualizarListaRelaciones();
+                        selectClienteRedmine.value = '';
+                    } else {
+                        alert('Error: ' + (updateData.error || 'No se pudo agregar la relación'));
+                    }
+                } catch (error) {
+                    console.error('Error al agregar relación:', error);
+                    alert('Error al agregar la relación');
+                }
+            }
+
+            // Eliminar relación
+            async function eliminarRelacionClienteRedmine(clienteRedmine) {
+                const selectCliente = document.getElementById('selectClienteWeb');
+                const clienteId = selectCliente.value;
+                
+                if (!clienteId) {
+                    alert('Por favor selecciona un cliente');
+                    return;
+                }
+
+                if (!confirm(`¿Estás seguro de eliminar la relación con "${clienteRedmine}"?`)) {
+                    return;
+                }
+
+                try {
+                    // Obtener relaciones actuales
+                    const clientesRedmineActuales = relacionesActuales[clienteId] || [];
+                    
+                    // Eliminar el seleccionado
+                    const nuevosClientesRedmine = clientesRedmineActuales.filter(cr => cr !== clienteRedmine);
+                    
+                    // Actualizar
+                    const updateResponse = await fetch(`/mapa/clientes/${clienteId}/cliente-redmine`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            clientesRedmine: nuevosClientesRedmine
+                        })
+                    });
+                    
+                    const updateData = await updateResponse.json();
+                    
+                    if (updateData.success) {
+                        relacionesActuales[clienteId] = updateData.clientesRedmine;
+                        actualizarListaRelaciones();
+                    } else {
+                        alert('Error: ' + (updateData.error || 'No se pudo eliminar la relación'));
+                    }
+                } catch (error) {
+                    console.error('Error al eliminar relación:', error);
+                    alert('Error al eliminar la relación');
+                }
+            }
+
+            // Cargar datos al iniciar
+            document.addEventListener('DOMContentLoaded', () => {
+                cargarClientesRedmine();
+            });
+        <% } %>
     </script>
 </body>
 </html>

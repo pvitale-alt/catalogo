@@ -134,7 +134,10 @@
             <% } %>
             
             <!-- Contenido -->
-            <div class="content-area">
+            <div class="content-area" style="position: relative;">
+                <!-- Imagen de fondo con opacidad -->
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; opacity: 0.2; background-image: url('/images/cover.png'); background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none;"></div>
+                <div style="position: relative; z-index: 1;">
                 <% if (proyectos.length === 0) { %>
                     <div class="empty-state">
                         <div class="empty-state-icon">📋</div>
@@ -277,7 +280,8 @@
                     </div>
                 <% } %>
             </div>
-        </div>
+                </div>
+            </div>
         </div>
     
     <script src="/js/main.js"></script>

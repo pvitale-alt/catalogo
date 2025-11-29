@@ -11,6 +11,7 @@ router.get('/:id/editar', reqClientesController.editarFormulario);
 // API
 router.post('/', reqClientesController.crear);
 router.put('/:id', reqClientesController.actualizar);
+router.put('/:id/ocultar', reqClientesController.ocultar);
 router.delete('/:id', reqClientesController.eliminar);
 
 module.exports = router;
