@@ -92,6 +92,7 @@ function toggleFilterSponsors(buttonElement) {
                 dropdown.style.top = (rect.bottom + 4) + 'px';
                 dropdown.style.left = rect.left + 'px';
                 dropdown.style.zIndex = '10000';
+                dropdown.style.background = 'white';
             }
             dropdown.style.display = 'block';
         }

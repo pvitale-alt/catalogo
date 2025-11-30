@@ -71,6 +71,7 @@
                                         spellcheck="false"
                                         style="flex: 1; border: none; outline: none; font-size: 16px; font-family: 'Google Sans', 'Roboto', sans-serif; resize: none; overflow: hidden; padding: 0; margin: 0; background: transparent; line-height: 44px; max-height: 44px;"
                                         oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight, 44)+'px'; buscarSugerencias(this.value); actualizarBotonLimpiar();"
+                                        onkeydown="if(event.key === 'Enter') { event.preventDefault(); buscar(event); }"
                                     ><%= typeof filtros !== 'undefined' && filtros.busqueda ? filtros.busqueda : '' %></textarea>
                                     <% if (typeof filtros !== 'undefined' && filtros.busqueda) { %>
                                         <button onclick="limpiarBusqueda()" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; margin-left: 8px; color: #5f6368;" title="Limpiar búsqueda">
@@ -382,6 +383,12 @@
         }
         
         function limpiarBusqueda() {
+            // Limpiar el input
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            // Eliminar el parámetro de búsqueda y refrescar
             const params = new URLSearchParams(window.location.search);
             params.delete('busqueda');
             window.location.search = params.toString();
@@ -421,6 +428,18 @@
                     }
                 });
             }
+        }
+        
+        function buscar(event) {
+            if (event) event.preventDefault();
+            const query = document.getElementById('searchInput').value.trim();
+            const params = new URLSearchParams(window.location.search);
+            if (query) {
+                params.set('busqueda', query);
+            } else {
+                params.delete('busqueda');
+            }
+            window.location.search = params.toString();
         }
     </script>
 </body>
