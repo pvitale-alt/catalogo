@@ -65,52 +65,19 @@ exports.detalle = async (req, res) => {
         const clientesFuncionalidad = await MapaModel.obtenerClientesPorFuncionalidad(id);
         const todosLosClientes = await MapaModel.obtenerTodosLosClientes();
         
-        // Obtener código del proyecto desde Redmine si está disponible
+        // Obtener código del proyecto (identifier) desde redmine_id
+        // Si redmine_id no es numérico, se asume que es un identifier de proyecto
         let proyectoCodigo = null;
         if (funcionalidad.redmine_id) {
-            try {
-                const REDMINE_URL = process.env.REDMINE_URL;
-                const REDMINE_TOKEN = process.env.REDMINE_TOKEN;
-                
-                if (!REDMINE_URL || !REDMINE_TOKEN) {
-                    console.warn('⚠️ REDMINE_URL o REDMINE_TOKEN no están configurados');
-                } else {
-                    const redmineIdStr = String(funcionalidad.redmine_id);
-                    const esNumero = /^\d+$/.test(redmineIdStr);
-                    
-                    if (esNumero) {
-                        // Es un ID de issue numérico, obtener el issue y extraer el identifier del proyecto
-                        const baseUrl = REDMINE_URL.replace(/\/+$/, '');
-                        const url = `${baseUrl}/issues/${funcionalidad.redmine_id}.json?key=${REDMINE_TOKEN}`;
-                        
-                        const response = await fetch(url, {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'User-Agent': 'Catalogo-NodeJS/1.0'
-                            }
-                        });
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data.issue && data.issue.project && data.issue.project.identifier) {
-                                proyectoCodigo = data.issue.project.identifier;
-                                console.log(`✅ Código del proyecto obtenido desde issue ${funcionalidad.redmine_id}: "${proyectoCodigo}"`);
-                            }
-                        } else {
-                            console.warn(`⚠️ Error HTTP al obtener issue ${funcionalidad.redmine_id}: ${response.status}`);
-                        }
-                    } else {
-                        // Parece ser un identifier de proyecto, usarlo directamente
-                        proyectoCodigo = redmineIdStr;
-                        console.log(`✅ Usando redmine_id como identifier del proyecto: "${proyectoCodigo}"`);
-                    }
-                }
-            } catch (error) {
-                console.error('Error al obtener código del proyecto desde Redmine:', error);
-                // Continuar sin el código del proyecto
+            const redmineIdStr = String(funcionalidad.redmine_id);
+            const esNumero = /^\d+$/.test(redmineIdStr);
+            
+            if (!esNumero) {
+                // Es un identifier de proyecto, usarlo directamente
+                proyectoCodigo = redmineIdStr;
             }
+            // Si es numérico, no podemos obtener el identifier sin llamar a Redmine
+            // Se deja como null y no se buscarán req clientes interesados
         }
         
         // Obtener req clientes por sponsor (cf_92 = código del proyecto)
@@ -124,8 +91,6 @@ exports.detalle = async (req, res) => {
             } catch (error) {
                 console.error('Error al obtener req clientes interesados:', error);
             }
-        } else {
-            console.log('⚠️ No se pudo obtener proyectoCodigo, no se buscarán req clientes interesados');
         }
         
         // Obtener epics de la funcionalidad

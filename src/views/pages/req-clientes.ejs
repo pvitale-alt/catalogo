@@ -23,8 +23,8 @@
             <div class="toolbar">
                 <div class="toolbar-left" style="display: flex; align-items: center; gap: 8px;">
                     <!-- Botones de filtro -->
-                    <div style="position: relative; margin-right: 12px;">
-                        <button class="filter-btn <%= (typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSecciones()" title="Filtrar por Sección">
+                    <div style="margin-right: 12px;">
+                        <button class="filter-btn <%= (typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSecciones(this)" title="Filtrar por Sección">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
                                 <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
                             </svg>
@@ -174,7 +174,7 @@
                                 <span>Reventa</span>
                             </div>
                             <div class="desktop-only">
-                                <span>Estado</span>
+                                <span>Estado Epic</span>
                             </div>
                             <div class="desktop-only">
                                 <span>Redmine</span>
@@ -198,11 +198,6 @@
                                 <div class="item-title">
                                     <div>
                                         <div><%= requerimiento.titulo || 'Sin título' %></div>
-                                        <% if (requerimiento.descripcion) { %>
-                                            <div class="text-small text-muted text-truncate" style="max-width: 400px;">
-                                                <%= requerimiento.descripcion %>
-                                            </div>
-                                        <% } %>
                                     </div>
                                 </div>
                                 <div class="item-text desktop-only">
@@ -212,14 +207,21 @@
                                     <%= (requerimiento.cf_91 === '1' || requerimiento.cf_91 === 1) ? 'Si' : (requerimiento.cf_91 === '0' || requerimiento.cf_91 === 0) ? 'No' : (requerimiento.cf_91 || '-') %>
                                 </div>
                                 <div class="item-text desktop-only">
-                                    <%= requerimiento.estado_redmine || '-' %>
+                                    <%= requerimiento.estado_epic || requerimiento.estado_redmine || '-' %>
                                 </div>
                                 <div class="item-text desktop-only">
-                                    <% if (requerimiento.redmine_id) { 
+                                    <% if (requerimiento.id_epic) { 
                                         const baseUrl = (redmineBaseUrl || 'https://redmine.mercap.net').replace(/\/+$/, '');
-                                        const epicUrl = `${baseUrl}/issues/${requerimiento.redmine_id}`;
+                                        const epicUrl = `${baseUrl}/issues/${requerimiento.id_epic}`;
                                     %>
                                         <a href="<%= epicUrl %>" target="_blank" onclick="event.stopPropagation();" style="color: var(--primary-color); text-decoration: none;">
+                                            Ver en Redmine
+                                        </a>
+                                    <% } else if (requerimiento.redmine_id) { 
+                                        const baseUrl = (redmineBaseUrl || 'https://redmine.mercap.net').replace(/\/+$/, '');
+                                        const reqUrl = `${baseUrl}/issues/${requerimiento.redmine_id}`;
+                                    %>
+                                        <a href="<%= reqUrl %>" target="_blank" onclick="event.stopPropagation();" style="color: var(--primary-color); text-decoration: none;">
                                             Ver en Redmine
                                         </a>
                                     <% } else { %>
@@ -254,10 +256,6 @@
                                         </svg>
                                     </button>
                                 </div>
-                                
-                                <% if (requerimiento.descripcion) { %>
-                                    <p class="card-description"><%= requerimiento.descripcion %></p>
-                                <% } %>
                                 
                                 <div class="card-meta">
                                     <% if (requerimiento.seccion) { %>
@@ -420,12 +418,7 @@
         }
         
         // Funciones de filtros y ordenamiento (similares a proyectos internos)
-        function toggleFilterSecciones() {
-            const dropdown = document.getElementById('filterSecciones');
-            if (dropdown) {
-                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-            }
-        }
+        // toggleFilterSecciones está definida en main.js
         
         function aplicarFiltros() {
             const checkboxes = document.querySelectorAll('.filter-checkbox-seccion:checked');

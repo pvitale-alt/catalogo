@@ -274,3 +274,137 @@ exports.ocultar = async (req, res) => {
         });
     }
 };
+
+/**
+ * Actualizar epic de un requerimiento de cliente
+ * @param {number} redmine_id - ID del requerimiento en Redmine
+ */
+exports.actualizarEpic = async (req, res) => {
+    try {
+        if (!req.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                error: 'Solo administradores pueden actualizar epics'
+            });
+        }
+
+        const { id } = req.params; // redmine_id del requerimiento
+        const requerimiento = await ReqClientesModel.obtenerPorId(id);
+        
+        if (!requerimiento) {
+            return res.status(404).json({
+                success: false,
+                error: 'Requerimiento no encontrado'
+            });
+        }
+
+        // Obtener ID del epic desde el requerimiento
+        const idEpic = requerimiento.id_epic;
+        
+        if (!idEpic) {
+            return res.status(400).json({
+                success: false,
+                error: 'Este requerimiento no tiene un epic asociado (parent)'
+            });
+        }
+
+        const REDMINE_URL = process.env.REDMINE_URL;
+        const REDMINE_TOKEN = process.env.REDMINE_TOKEN;
+
+        if (!REDMINE_URL || !REDMINE_TOKEN) {
+            return res.status(500).json({
+                success: false,
+                error: 'REDMINE_URL o REDMINE_TOKEN no están configurados'
+            });
+        }
+
+        // Obtener epic desde Redmine
+        const baseUrl = REDMINE_URL.replace(/\/+$/, '');
+        const epicUrl = `${baseUrl}/issues/${idEpic}.json?status_id=*&key=${REDMINE_TOKEN}`;
+        
+        console.log(`🔄 Obteniendo epic desde: ${epicUrl.replace(/key=[^&]+/, 'key=***')}`);
+        
+        const epicResponse = await fetch(epicUrl, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'User-Agent': 'Catalogo-NodeJS/1.0'
+            }
+        });
+
+        if (!epicResponse.ok) {
+            return res.status(epicResponse.status).json({
+                success: false,
+                error: `Error al obtener epic desde Redmine: ${epicResponse.statusText}`
+            });
+        }
+
+        const epicData = await epicResponse.json();
+        const epic = epicData.issue;
+
+        if (!epic) {
+            return res.status(404).json({
+                success: false,
+                error: 'Epic no encontrado en Redmine'
+            });
+        }
+
+        // Extraer datos del epic
+        const estadoEpic = epic.status?.name || null;
+        const inicioEpic = epic.start_date || null;
+        
+        // Extraer fecha de finalización del custom field 15 (Fecha real de Finalización)
+        const customFields = epic.custom_fields || [];
+        const fechaFinalizacion = customFields.find(cf => cf.id === 15)?.value || null;
+        
+        // Convertir fechas
+        let inicioEpicDate = null;
+        if (inicioEpic) {
+            const fecha = new Date(inicioEpic);
+            if (!isNaN(fecha.getTime())) {
+                inicioEpicDate = fecha.toISOString().split('T')[0];
+            }
+        }
+        
+        let finEpicDate = null;
+        if (fechaFinalizacion) {
+            const fecha = new Date(fechaFinalizacion);
+            if (!isNaN(fecha.getTime())) {
+                finEpicDate = fecha.toISOString().split('T')[0];
+            }
+        }
+
+        // Actualizar en la base de datos
+        const { pool } = require('../config/database');
+        await pool.query(`
+            UPDATE redmine_req_clientes
+            SET estado_epic = $1,
+                inicio_epic = $2,
+                fin_epic = $3
+            WHERE redmine_id = $4
+        `, [
+            estadoEpic,
+            inicioEpicDate,
+            finEpicDate,
+            requerimiento.redmine_id
+        ]);
+
+        res.json({
+            success: true,
+            message: 'Epic actualizado exitosamente',
+            epic: {
+                id: idEpic,
+                estado: estadoEpic,
+                inicio: inicioEpicDate,
+                fin: finEpicDate
+            }
+        });
+    } catch (error) {
+        console.error('Error al actualizar epic:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al actualizar el epic'
+        });
+    }
+};

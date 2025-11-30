@@ -31,8 +31,8 @@
                         </button>
                     <% } %>
                     <!-- Botones de filtro -->
-                    <div style="position: relative; margin-right: 12px;">
-                        <button class="filter-btn <%= (typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSecciones()" title="Filtrar por Sección">
+                    <div style="margin-right: 12px;">
+                        <button class="filter-btn <%= (typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSecciones(this)" title="Filtrar por Sección">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
                                 <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
                             </svg>
@@ -57,8 +57,8 @@
                         </div>
                     </div>
                     
-                    <div style="position: relative;">
-                        <button class="filter-btn <%= (typeof filtros.sponsors !== 'undefined' && filtros.sponsors.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSponsors()" title="Filtrar por Sponsor">
+                    <div>
+                        <button class="filter-btn <%= (typeof filtros.sponsors !== 'undefined' && filtros.sponsors.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSponsors(this)" title="Filtrar por Sponsor">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
                                 <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
                             </svg>

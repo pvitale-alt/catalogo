@@ -23,8 +23,8 @@
             <div class="toolbar">
                 <div class="toolbar-left" style="display: flex; align-items: center; gap: 8px;">
                     <!-- Botones de filtro -->
-                    <div style="position: relative; margin-right: 12px;">
-                        <button class="filter-btn <%= (typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSecciones()" title="Filtrar por Sección">
+                    <div style="margin-right: 12px;">
+                        <button class="filter-btn <%= (typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSecciones(this)" title="Filtrar por Sección">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
                                 <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
                             </svg>
@@ -204,7 +204,16 @@
                                     <% } %>
                                 </div>
                                 <div class="item-text desktop-only">
-                                    <%= proyecto.estado_redmine || '-' %>
+                                    <% 
+                                    const estado = proyecto.estado_redmine || '-';
+                                    let estadoStyle = '';
+                                    if (estado.toLowerCase() === 'abierto') {
+                                        estadoStyle = 'background: rgba(251, 146, 60, 0.15); padding: 4px 12px; border-radius: 12px; display: inline-block;';
+                                    } else if (estado.toLowerCase() === 'cerrado' || estado.toLowerCase() === 'entregado') {
+                                        estadoStyle = 'background: rgba(34, 197, 94, 0.15); padding: 4px 12px; border-radius: 12px; display: inline-block;';
+                                    }
+                                    %>
+                                    <span style="<%= estadoStyle %>"><%= estado %></span>
                                 </div>
                                 <div class="item-text desktop-only">
                                     <%= proyecto.services_id || '-' %>

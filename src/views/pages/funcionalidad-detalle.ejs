@@ -558,6 +558,11 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    // Limpiar intervalo de progreso simulado
+                    const overlay = document.getElementById('syncOverlay');
+                    if (overlay && overlay.dataset.intervalo) {
+                        clearInterval(parseInt(overlay.dataset.intervalo));
+                    }
                     // Actualizar barra de progreso a 100%
                     actualizarProgresoSincronizacion(100);
                     // Esperar un momento y recargar
@@ -581,8 +586,14 @@
             }
         }
         
+        // Variable para mantener el progreso actual
+        let progresoActualEpics = 0;
+        
         // Funciones de popup de sincronización (copiadas de main.js)
         function mostrarPopupSincronizacion() {
+            // Resetear progreso
+            progresoActualEpics = 0;
+            
             // Crear overlay
             const overlay = document.createElement('div');
             overlay.id = 'syncOverlay';
@@ -610,26 +621,50 @@
             overlay.appendChild(popup);
             document.body.appendChild(overlay);
             
-            // Simular progreso
-            let progreso = 0;
+            // Simular progreso de forma progresiva y predecible
             const intervalo = setInterval(() => {
-                progreso += Math.random() * 15;
-                if (progreso > 90) progreso = 90;
-                actualizarProgresoSincronizacion(progreso);
-            }, 200);
+                // Incremento más pequeño y consistente (entre 1% y 3% por intervalo)
+                const incremento = 1 + Math.random() * 2;
+                progresoActualEpics += incremento;
+                
+                // Limitar a 90% máximo hasta que la sincronización termine
+                if (progresoActualEpics > 90) {
+                    progresoActualEpics = 90;
+                }
+                
+                actualizarProgresoSincronizacion(progresoActualEpics);
+            }, 300);
             
             // Guardar intervalo para limpiarlo después
             overlay.dataset.intervalo = intervalo;
         }
         
         function actualizarProgresoSincronizacion(porcentaje) {
-            const progressBar = document.getElementById('syncProgressBar');
-            const progressText = document.getElementById('syncProgressText');
-            if (progressBar) {
-                progressBar.style.width = porcentaje + '%';
-            }
-            if (progressText) {
-                progressText.textContent = Math.round(porcentaje) + '%';
+            // Asegurar que el porcentaje esté entre 0 y 100
+            porcentaje = Math.max(0, Math.min(100, porcentaje));
+            
+            // Solo actualizar si el nuevo porcentaje es mayor o igual al actual
+            // Esto previene retrocesos
+            if (porcentaje >= progresoActualEpics) {
+                progresoActualEpics = porcentaje;
+                
+                const progressBar = document.getElementById('syncProgressBar');
+                const progressText = document.getElementById('syncProgressText');
+                
+                if (progressBar) {
+                    progressBar.style.width = porcentaje + '%';
+                }
+                if (progressText) {
+                    progressText.textContent = Math.round(porcentaje) + '%';
+                }
+                
+                // Si llegamos a 100%, limpiar el intervalo si existe
+                if (porcentaje >= 100) {
+                    const overlay = document.getElementById('syncOverlay');
+                    if (overlay && overlay.dataset.intervalo) {
+                        clearInterval(parseInt(overlay.dataset.intervalo));
+                    }
+                }
             }
         }
         

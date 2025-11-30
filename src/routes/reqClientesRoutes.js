@@ -12,6 +12,7 @@ router.get('/:id/editar', reqClientesController.editarFormulario);
 router.post('/', reqClientesController.crear);
 router.put('/:id', reqClientesController.actualizar);
 router.put('/:id/ocultar', reqClientesController.ocultar);
+router.post('/:id/actualizar-epic', reqClientesController.actualizarEpic);
 router.delete('/:id', reqClientesController.eliminar);
 
 module.exports = router;

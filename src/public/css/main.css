@@ -405,16 +405,16 @@ h3 {
 }
 
 .filter-dropdown {
-    position: absolute;
-    top: 48px;
-    left: 0;
-    background: white;
+    position: fixed;
+    background: white !important;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    box-shadow: var(--shadow);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     min-width: 200px;
+    max-height: 400px;
+    overflow-y: auto;
     display: none;
-    z-index: 1000;
+    z-index: 10000;
 }
 
 .filter-dropdown.active {
@@ -809,6 +809,44 @@ select.btn:focus {
 .list-header > div:nth-child(2) {
     justify-content: center;
     text-align: center;
+    position: relative;
+}
+
+/* Posicionar el ícono de ordenamiento de forma absoluta para no afectar el centrado del texto en Sección */
+.list-header > div:nth-child(2) .sort-icon {
+    position: absolute;
+    right: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+    width: 18px;
+    height: 18px;
+}
+
+.list-header > div:nth-child(2):hover .sort-icon,
+.list-header > div:nth-child(2).sorted .sort-icon {
+    opacity: 1;
+}
+
+/* Header Fecha Creación - centrar ambas palabras (usando ID para mayor especificidad) */
+#fechaCreacionHeader {
+    justify-content: center;
+    text-align: center;
+    position: relative;
+}
+
+/* Posicionar el ícono de ordenamiento de forma absoluta para no afectar el centrado del texto en Fecha Creación */
+#fechaCreacionHeader .sort-icon {
+    position: absolute;
+    right: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+    width: 18px;
+    height: 18px;
+}
+
+#fechaCreacionHeader:hover .sort-icon,
+#fechaCreacionHeader.sorted .sort-icon {
+    opacity: 1;
 }
 
 /* Header Sponsor - centrar solo el texto, ignorando el ícono de ordenamiento */
@@ -932,10 +970,14 @@ select.btn:focus {
     margin: 0;
 }
 
-/* Columna monto más estrecha */
+/* Columna fecha creación - centrada para alinearse con el header */
 .list-item > .item-text:nth-child(4) {
     max-width: 100px;
     font-size: 12px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .item-badge {

@@ -71,6 +71,10 @@ class ReqClientesModel {
             const query = `
                 SELECT 
                     v.*,
+                    r.id_epic,
+                    r.estado_epic,
+                    r.inicio_epic,
+                    r.fin_epic,
                     s.origen, s.facturacion, s.facturacion_potencial,
                     s.impacto_cliente, s.esfuerzo, s.incertidumbre, s.riesgo,
                     s.score_calculado,
@@ -78,6 +82,7 @@ class ReqClientesModel {
                     s.peso_facturacion_potencial, s.peso_impacto_cliente,
                     s.peso_esfuerzo, s.peso_incertidumbre, s.peso_riesgo
                 FROM v_req_clientes_completos v
+                LEFT JOIN redmine_req_clientes r ON v.redmine_id = r.redmine_id
                 LEFT JOIN score_backlog s ON v.redmine_id = s.funcionalidad_id
                 WHERE v.redmine_id = $1
             `;

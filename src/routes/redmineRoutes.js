@@ -6,32 +6,6 @@ const sincronizacionService = require('../services/sincronizacionService');
 const { requireAdmin } = require('../middleware/authJWT');
 
 /**
- * GET /api/redmine/issues
- * Obtener issues de Redmine (sin guardar en BD)
- */
-router.get('/issues', async (req, res) => {
-    try {
-        const { project_id = process.env.REDMINE_DEFAULT_PROJECT || 'ut-bancor', tracker_id = null, limit = 10 } = req.query;
-        
-        const data = await redmineService.obtenerIssues({
-            project_id,
-            tracker_id,
-            limit: parseInt(limit)
-        });
-        
-        res.json({
-            success: true,
-            ...data
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-/**
  * POST /api/redmine/sincronizar
  * Sincronizar issues de Redmine con la base de datos
  * ⚠️ Requiere permisos de administrador
@@ -117,31 +91,6 @@ router.post('/sincronizar-proyectos-internos', requireAdmin, async (req, res) =>
         
         const resultado = await sincronizacionService.sincronizarProyectosInternos(tracker_id, maxTotal, cf23Filter);
         res.json(resultado);
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-/**
- * GET /api/redmine/proyectos
- * Listar todos los proyectos disponibles en Redmine
- * Útil para encontrar el nombre exacto o identifier de un proyecto
- */
-router.get('/proyectos', requireAdmin, async (req, res) => {
-    try {
-        const { limit = null } = req.query;
-        const limitNum = limit ? parseInt(limit) : null;
-        
-        const proyectos = await redmineService.listarProyectos(limitNum);
-        
-        res.json({
-            success: true,
-            total: proyectos.length,
-            proyectos
-        });
     } catch (error) {
         res.status(500).json({
             success: false,

@@ -123,3 +123,4 @@ class EpicModel {
 
 module.exports = EpicModel;
 
+

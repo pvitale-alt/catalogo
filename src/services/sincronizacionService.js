@@ -454,8 +454,8 @@ async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
                     INSERT INTO redmine_req_clientes (
                         redmine_id, titulo, descripcion, proyecto_completo, cliente, fecha_creacion, 
                         fecha_real_finalizacion, total_spent_hours, estado_redmine, 
-                        cf_91, cf_92, sincronizado_en
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
+                        cf_91, cf_92, id_epic, sincronizado_en
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
                     ON CONFLICT (redmine_id) 
                     DO UPDATE SET
                         titulo = EXCLUDED.titulo,
@@ -468,6 +468,7 @@ async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
                         estado_redmine = EXCLUDED.estado_redmine,
                         cf_91 = EXCLUDED.cf_91,
                         cf_92 = EXCLUDED.cf_92,
+                        id_epic = EXCLUDED.id_epic,
                         sincronizado_en = CURRENT_TIMESTAMP
                     RETURNING (xmax = 0) AS inserted
                 `, [
@@ -481,7 +482,8 @@ async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
                     issue.total_spent_hours,
                     issue.estado_redmine,
                     issue.cf_91,
-                    issue.cf_92
+                    issue.cf_92,
+                    issue.id_epic || null
                 ]);
 
                 // xmax = 0 significa que fue INSERT, xmax != 0 significa UPDATE

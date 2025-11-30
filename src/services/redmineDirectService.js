@@ -331,6 +331,9 @@ function mapearIssueReqClientes(issue) {
         }
     }
     
+    // Extraer ID del epic (parent)
+    const idEpic = issue.parent?.id || null;
+    
     return {
         // ID del issue (único e inmutable)
         redmine_id: issue.id,
@@ -345,7 +348,8 @@ function mapearIssueReqClientes(issue) {
         total_spent_hours: issue.total_spent_hours || null,
         estado_redmine: estadoRedmine, // Status.name
         cf_91: cf91, // Es Reventa (normalizado a "No"/"Si")
-        cf_92: cf92 // Proyecto Sponsor
+        cf_92: cf92, // Proyecto Sponsor
+        id_epic: idEpic // ID del epic (parent)
     };
 }
 

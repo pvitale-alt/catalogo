@@ -16,3 +16,4 @@ router.delete('/:id', proyectosInternosController.eliminar);
 module.exports = router;
 
 
+

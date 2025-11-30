@@ -39,27 +39,90 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Toggle filter dropdowns
-function toggleFilterSecciones() {
+function toggleFilterSecciones(buttonElement) {
     const dropdown = document.getElementById('filterSecciones');
     const sponsorsDropdown = document.getElementById('filterSponsors');
-    if (dropdown) {
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-    }
+    
+    // Cerrar otros dropdowns
     if (sponsorsDropdown) {
         sponsorsDropdown.style.display = 'none';
     }
+    
+    if (dropdown) {
+        const isVisible = dropdown.style.display === 'block';
+        
+        if (isVisible) {
+            dropdown.style.display = 'none';
+        } else {
+            // Obtener el botón que disparó el evento
+            const button = buttonElement || document.querySelector('button[onclick*="toggleFilterSecciones"]');
+            if (button) {
+                const rect = button.getBoundingClientRect();
+                dropdown.style.position = 'fixed';
+                dropdown.style.top = (rect.bottom + 4) + 'px';
+                dropdown.style.left = rect.left + 'px';
+                dropdown.style.zIndex = '10000';
+                dropdown.style.background = 'white';
+            }
+            dropdown.style.display = 'block';
+        }
+    }
 }
 
-function toggleFilterSponsors() {
+function toggleFilterSponsors(buttonElement) {
     const dropdown = document.getElementById('filterSponsors');
     const seccionesDropdown = document.getElementById('filterSecciones');
-    if (dropdown) {
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-    }
+    
+    // Cerrar otros dropdowns
     if (seccionesDropdown) {
         seccionesDropdown.style.display = 'none';
     }
+    
+    if (dropdown) {
+        const isVisible = dropdown.style.display === 'block';
+        
+        if (isVisible) {
+            dropdown.style.display = 'none';
+        } else {
+            // Obtener el botón que disparó el evento
+            const button = buttonElement || document.querySelector('button[onclick*="toggleFilterSponsors"]');
+            if (button) {
+                const rect = button.getBoundingClientRect();
+                dropdown.style.position = 'fixed';
+                dropdown.style.top = (rect.bottom + 4) + 'px';
+                dropdown.style.left = rect.left + 'px';
+                dropdown.style.zIndex = '10000';
+            }
+            dropdown.style.display = 'block';
+        }
+    }
 }
+
+// Cerrar dropdowns al hacer clic fuera
+document.addEventListener('click', function(event) {
+    const filterDropdowns = document.querySelectorAll('.filter-dropdown');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    let clickedInside = false;
+    
+    filterButtons.forEach(button => {
+        if (button.contains(event.target)) {
+            clickedInside = true;
+        }
+    });
+    
+    filterDropdowns.forEach(dropdown => {
+        if (dropdown.contains(event.target)) {
+            clickedInside = true;
+        }
+    });
+    
+    if (!clickedInside) {
+        filterDropdowns.forEach(dropdown => {
+            dropdown.style.display = 'none';
+        });
+    }
+});
 
 // Aplicar filtros con selección múltiple
 function aplicarFiltros() {
@@ -316,6 +379,11 @@ async function sincronizarProyectosInternos() {
         const data = await response.json();
         
         if (data.success) {
+            // Limpiar intervalo de progreso simulado
+            const overlay = document.getElementById('syncOverlay');
+            if (overlay && overlay.dataset.intervalo) {
+                clearInterval(parseInt(overlay.dataset.intervalo));
+            }
             // Actualizar barra de progreso a 100%
             actualizarProgresoSincronizacion(100);
             // Esperar un momento y recargar
@@ -369,6 +437,11 @@ async function sincronizarReqClientes() {
         const data = await response.json();
         
         if (data.success) {
+            // Limpiar intervalo de progreso simulado
+            const overlay = document.getElementById('syncOverlay');
+            if (overlay && overlay.dataset.intervalo) {
+                clearInterval(parseInt(overlay.dataset.intervalo));
+            }
             // Actualizar barra de progreso a 100%
             actualizarProgresoSincronizacion(100);
             // Esperar un momento y recargar
@@ -393,8 +466,14 @@ async function sincronizarReqClientes() {
     }
 }
 
+// Variable global para mantener el progreso actual
+let progresoActual = 0;
+
 // Mostrar popup de sincronización
 function mostrarPopupSincronizacion() {
+    // Resetear progreso
+    progresoActual = 0;
+    
     // Crear overlay
     const overlay = document.createElement('div');
     overlay.id = 'syncOverlay';
@@ -422,27 +501,51 @@ function mostrarPopupSincronizacion() {
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
     
-    // Simular progreso
-    let progreso = 0;
+    // Simular progreso de forma progresiva y predecible
     const intervalo = setInterval(() => {
-        progreso += Math.random() * 15;
-        if (progreso > 90) progreso = 90;
-        actualizarProgresoSincronizacion(progreso);
-    }, 200);
+        // Incremento más pequeño y consistente (entre 1% y 3% por intervalo)
+        const incremento = 1 + Math.random() * 2;
+        progresoActual += incremento;
+        
+        // Limitar a 90% máximo hasta que la sincronización termine
+        if (progresoActual > 90) {
+            progresoActual = 90;
+        }
+        
+        actualizarProgresoSincronizacion(progresoActual);
+    }, 300);
     
     // Guardar intervalo para limpiarlo después
     overlay.dataset.intervalo = intervalo;
 }
 
-// Actualizar progreso de sincronización
+// Actualizar progreso de sincronización (solo avanza, nunca retrocede)
 function actualizarProgresoSincronizacion(porcentaje) {
-    const barra = document.getElementById('syncProgressBar');
-    const texto = document.getElementById('syncProgressText');
-    if (barra) {
-        barra.style.width = porcentaje + '%';
-    }
-    if (texto) {
-        texto.textContent = Math.round(porcentaje) + '%';
+    // Asegurar que el porcentaje esté entre 0 y 100
+    porcentaje = Math.max(0, Math.min(100, porcentaje));
+    
+    // Solo actualizar si el nuevo porcentaje es mayor o igual al actual
+    // Esto previene retrocesos
+    if (porcentaje >= progresoActual) {
+        progresoActual = porcentaje;
+        
+        const barra = document.getElementById('syncProgressBar');
+        const texto = document.getElementById('syncProgressText');
+        
+        if (barra) {
+            barra.style.width = porcentaje + '%';
+        }
+        if (texto) {
+            texto.textContent = Math.round(porcentaje) + '%';
+        }
+        
+        // Si llegamos a 100%, limpiar el intervalo si existe
+        if (porcentaje >= 100) {
+            const overlay = document.getElementById('syncOverlay');
+            if (overlay && overlay.dataset.intervalo) {
+                clearInterval(parseInt(overlay.dataset.intervalo));
+            }
+        }
     }
 }
 
