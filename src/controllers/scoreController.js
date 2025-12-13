@@ -1,7 +1,9 @@
 const ScoreModel = require('../models/ScoreModel');
 const ScoreBacklogModel = require('../models/ScoreBacklogModel');
+const ScoreIdeasModel = require('../models/ScoreIdeasModel');
 const FuncionalidadModel = require('../models/FuncionalidadModel');
 const ProyectosInternosModel = require('../models/ProyectosInternosModel');
+const IdeasMejorasModel = require('../models/IdeasMejorasModel');
 
 /**
  * Renderizar página de score
@@ -27,8 +29,8 @@ exports.index = async (req, res) => {
 };
 
 /**
- * Renderizar calculadora de score para una funcionalidad o proyecto interno
- * Reutiliza la misma lógica para ambos casos
+ * Renderizar calculadora de score para una funcionalidad, proyecto interno o idea/mejora
+ * Reutiliza la misma lógica para todos los casos
  */
 exports.calculadora = async (req, res) => {
     try {
@@ -46,6 +48,13 @@ exports.calculadora = async (req, res) => {
             if (item) {
                 score = await ScoreBacklogModel.obtenerPorFuncionalidad(id);
                 tipo = 'proyectos-internos';
+            } else {
+                // Si no es proyecto interno, intentar como idea/mejora
+                item = await IdeasMejorasModel.obtenerPorId(id);
+                if (item) {
+                    score = await ScoreIdeasModel.obtenerPorIdea(id);
+                    tipo = 'ideas-mejoras';
+                }
             }
         }
         
@@ -60,7 +69,7 @@ exports.calculadora = async (req, res) => {
             funcionalidad: item, // Mantener nombre para compatibilidad con la vista
             score,
             tipo,
-            activeMenu: tipo === 'proyectos-internos' ? 'proyectos-internos' : 'score'
+            activeMenu: tipo === 'proyectos-internos' ? 'proyectos-internos' : (tipo === 'ideas-mejoras' ? 'ideas-mejoras' : 'score')
         });
     } catch (error) {
         console.error('Error al cargar calculadora:', error);
@@ -72,21 +81,27 @@ exports.calculadora = async (req, res) => {
 };
 
 /**
- * Actualizar score de funcionalidad o proyecto interno
- * Reutiliza la misma lógica para ambos casos
+ * Actualizar score de funcionalidad, proyecto interno o idea/mejora
+ * Reutiliza la misma lógica para todos los casos
  */
 exports.actualizar = async (req, res) => {
     try {
         const { id } = req.params;
         
-        // Determinar si es funcionalidad o proyecto interno primero
+        // Determinar si es funcionalidad, proyecto interno o idea/mejora
         let funcionalidad = await FuncionalidadModel.obtenerPorId(id);
         let esProyectoInterno = false;
+        let esIdeaMejora = false;
         
         if (!funcionalidad) {
             const proyecto = await ProyectosInternosModel.obtenerPorId(id);
             if (proyecto) {
                 esProyectoInterno = true;
+            } else {
+                const idea = await IdeasMejorasModel.obtenerPorId(id);
+                if (idea) {
+                    esIdeaMejora = true;
+                }
             }
         }
         
@@ -100,8 +115,8 @@ exports.actualizar = async (req, res) => {
             riesgo: parseInt(req.body.riesgo) || 0
         };
         
-        // Agregar origen solo para proyectos internos
-        if (esProyectoInterno) {
+        // Agregar origen para proyectos internos e ideas/mejoras
+        if (esProyectoInterno || esIdeaMejora) {
             criterios.origen = parseInt(req.body.origen) || 0;
         }
         
@@ -124,6 +139,8 @@ exports.actualizar = async (req, res) => {
             score = await ScoreModel.actualizar(id, criterios);
         } else if (esProyectoInterno) {
             score = await ScoreBacklogModel.actualizar(id, criterios);
+        } else if (esIdeaMejora) {
+            score = await ScoreIdeasModel.actualizar(id, criterios);
         }
         
         if (!score) {
@@ -148,7 +165,7 @@ exports.actualizar = async (req, res) => {
 };
 
 /**
- * Actualizar pesos de criterios (funcionalidad o proyectos internos)
+ * Actualizar pesos de criterios (funcionalidad, proyectos internos o ideas/mejoras)
  */
 exports.actualizarPesos = async (req, res) => {
     try {
@@ -164,7 +181,7 @@ exports.actualizarPesos = async (req, res) => {
             peso_riesgo: parseFloat(req.body.peso_riesgo) || 30.00
         };
         
-        // Determinar si es funcionalidad o proyecto interno
+        // Determinar si es funcionalidad, proyecto interno o idea/mejora
         let funcionalidad = await FuncionalidadModel.obtenerPorId(id);
         let score = null;
         
@@ -175,6 +192,12 @@ exports.actualizarPesos = async (req, res) => {
             const proyecto = await ProyectosInternosModel.obtenerPorId(id);
             if (proyecto) {
                 score = await ScoreBacklogModel.actualizarPesos(id, pesos);
+            } else {
+                // Intentar como idea/mejora
+                const idea = await IdeasMejorasModel.obtenerPorId(id);
+                if (idea) {
+                    score = await ScoreIdeasModel.actualizarPesos(id, pesos);
+                }
             }
         }
         

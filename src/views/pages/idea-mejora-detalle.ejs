@@ -12,12 +12,12 @@
     <header class="top-header">
         <div style="display: flex; align-items: center; gap: 12px;">
             <img src="/images/logo.png" alt="Logo" style="height: 28px; width: auto; display: block;" onerror="this.style.display='none';" />
-            <span style="font-size: 16px; font-weight: 500; color: var(--text-secondary); font-family: 'Google Sans', 'Roboto', sans-serif;">Catálogo Unitrade</span>
+            <span style="font-size: 16px; font-weight: 500; color: var(--text-secondary); font-family: 'Google Sans', 'Roboto', sans-serif;">Catálogo</span>
         </div>
     </header>
     
     <div class="app-container" style="margin-top: 0;">
-        <%- include('../partials/sidebar', { activeMenu: 'proyectos-internos' }) %>
+        <%- include('../partials/sidebar', { activeMenu: 'ideas-mejoras' }) %>
         
         <div class="main-content" style="position: relative;">
             <!-- Imagen de fondo con opacidad -->
@@ -33,26 +33,36 @@
                     </button>
                 </div>
                 
-                <!-- Detalle de proyecto -->
+                <!-- Detalle de idea -->
                 <div class="card" style="max-width: 1000px; margin: 0 auto;">
                     <!-- Header -->
                     <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 24px; margin-bottom: 24px;">
                         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
                             <div style="flex: 1;">
-                                <h1 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">
-                                    <%= proyecto.titulo %>
-                                </h1>
+                                <div id="tituloView">
+                                    <h1 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">
+                                        <%= idea.titulo %>
+                                    </h1>
+                                </div>
+                                <div id="tituloEdit" style="display: none; margin-bottom: 12px;">
+                                    <input 
+                                        type="text" 
+                                        id="tituloInput" 
+                                        value="<%= idea.titulo %>"
+                                        style="width: 100%; font-size: 28px; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-family: 'Google Sans', 'Roboto', sans-serif; color: var(--text-primary);"
+                                    />
+                                </div>
                                 
                                 <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; flex-direction: column;">
                                     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                                        <% if (proyecto.seccion) { %>
-                                            <span class="item-badge">
-                                                <%= proyecto.seccion %>
+                                        <% if (idea.seccion) { %>
+                                            <span class="item-badge" id="seccionBadge">
+                                                <%= idea.seccion %>
                                             </span>
                                         <% } %>
                                         
                                         <% 
-                                        let score = proyecto.score_calculado || proyecto.score_total || 0;
+                                        let score = idea.score_calculado || idea.score_total || 0;
                                         score = parseFloat(score) || 0;
                                         let scoreClass = 'score-low';
                                         if (score > 6.50) scoreClass = 'score-high';
@@ -62,36 +72,6 @@
                                             ⭐ Score: <%= score.toFixed(1) %>
                                         </span>
                                     </div>
-                                    
-                                    <% if (proyecto.redmine_id) { 
-                                        const baseUrl = (redmineBaseUrl || 'https://redmine.mercap.net').replace(/\/+$/, '');
-                                        const epicUrl = `${baseUrl}/issues/${proyecto.redmine_id}`;
-                                    %>
-                                        <div style="margin-top: 8px;">
-                                            <a href="<%= epicUrl %>" target="_blank" style="color: var(--primary-color); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px;">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                                                </svg>
-                                                Ver en Redmine
-                                            </a>
-                                        </div>
-                                        <% if (proyecto.services_id) { %>
-                                            <div style="margin-top: 8px; color: var(--text-secondary); font-size: 14px; display: flex; align-items: center; gap: 6px;">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
-                                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                                                </svg>
-                                                Services ID: <%= proyecto.services_id %>
-                                            </div>
-                                        <% } %>
-                                        <% if (proyecto.proyecto_completo) { %>
-                                            <div style="margin-top: 8px; color: var(--text-secondary); font-size: 14px; display: flex; align-items: center; gap: 6px;">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
-                                                    <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
-                                                </svg>
-                                                Proyecto: <%= proyecto.proyecto_completo %>
-                                            </div>
-                                        <% } %>
-                                    <% } %>
                                 </div>
                             </div>
                             
@@ -102,11 +82,17 @@
                                     </svg>
                                     <span id="btnEditarTexto">Editar</span>
                                 </button>
-                                <button onclick='window.location.href="/score/calculadora/" + encodeURIComponent(String(<%= proyecto.redmine_id || proyecto.id || "" %>))' class="button">
+                                <button onclick='window.location.href="/ideas-mejoras/<%= idea.id %>/score"' class="button">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
                                     <span>Evaluar</span>
+                                </button>
+                                <button onclick="confirmarEliminar()" class="button button-secondary" style="color: #d93025; border-color: #d93025;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                    <span>Eliminar</span>
                                 </button>
                             </div>
                         </div>
@@ -118,17 +104,17 @@
                             Descripción
                         </h2>
                         <div id="descripcionView" style="color: var(--text-secondary); line-height: 1.6;">
-                            <%= proyecto.descripcion || 'Sin descripción' %>
+                            <%= idea.descripcion || 'Sin descripción' %>
                         </div>
                         <div id="descripcionEdit" style="display: none;">
                             <textarea 
                                 id="descripcionInput" 
                                 class="input" 
                                 style="width: 100%; min-height: 120px; padding: 16px; font-family: 'Roboto', sans-serif; font-size: 14px; resize: vertical; border-radius: 12px; border: 1px solid var(--border-color); background: #f8f9fa; color: var(--text-primary); line-height: 1.6; transition: all 0.2s ease;"
-                                placeholder="Ingrese la descripción del proyecto..."
+                                placeholder="Ingrese la descripción de la idea..."
                                 onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'; this.style.background='white'"
                                 onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'; this.style.background='#f8f9fa'"
-                            ><%= proyecto.descripcion || '' %></textarea>
+                            ><%= idea.descripcion || '' %></textarea>
                         </div>
                     </div>
                     
@@ -145,7 +131,7 @@
                                         <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
                                     </svg>
                                     <span style="font-weight: 500; color: var(--text-primary);">
-                                        <%= proyecto.seccion || proyecto.proyecto_completo || 'Sin sección' %>
+                                        <%= idea.seccion || 'Sin sección' %>
                                     </span>
                                 </div>
                                 <div id="seccionEdit" style="display: none;">
@@ -155,21 +141,21 @@
                                         style="width: 100%; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif; background: white; cursor: pointer; transition: all 0.2s ease;"
                                     >
                                         <option value="">Seleccionar sección...</option>
-                                        <option value="Operatorias" <%= proyecto.seccion === 'Operatorias' ? 'selected' : '' %>>Operatorias</option>
-                                        <option value="Reportes e interfaces" <%= proyecto.seccion === 'Reportes e interfaces' ? 'selected' : '' %>>Reportes e interfaces</option>
-                                        <option value="Backoffice" <%= proyecto.seccion === 'Backoffice' ? 'selected' : '' %>>Backoffice</option>
-                                        <option value="Mercados" <%= proyecto.seccion === 'Mercados' ? 'selected' : '' %>>Mercados</option>
-                                        <option value="Contabilidad" <%= proyecto.seccion === 'Contabilidad' ? 'selected' : '' %>>Contabilidad</option>
-                                        <option value="Valuacion" <%= proyecto.seccion === 'Valuacion' ? 'selected' : '' %>>Valuacion</option>
+                                        <option value="Operatorias" <%= idea.seccion === 'Operatorias' ? 'selected' : '' %>>Operatorias</option>
+                                        <option value="Reportes e interfaces" <%= idea.seccion === 'Reportes e interfaces' ? 'selected' : '' %>>Reportes e interfaces</option>
+                                        <option value="Backoffice" <%= idea.seccion === 'Backoffice' ? 'selected' : '' %>>Backoffice</option>
+                                        <option value="Mercados" <%= idea.seccion === 'Mercados' ? 'selected' : '' %>>Mercados</option>
+                                        <option value="Contabilidad" <%= idea.seccion === 'Contabilidad' ? 'selected' : '' %>>Contabilidad</option>
+                                        <option value="Valuacion" <%= idea.seccion === 'Valuacion' ? 'selected' : '' %>>Valuacion</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Columna 2: Fecha de creación, Estado -->
+                        <!-- Columna 2: Fecha de creación -->
                         <div>
-                            <% if (proyecto.fecha_creacion) { %>
-                                <div style="min-height: 60px; margin-bottom: 24px;">
+                            <% if (idea.fecha_creacion) { %>
+                                <div style="min-height: 60px;">
                                     <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
                                         Fecha de creación
                                     </div>
@@ -178,34 +164,7 @@
                                             <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
                                         </svg>
                                         <span style="font-weight: 500; color: var(--text-primary);">
-                                            <%= new Date(proyecto.fecha_creacion).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' }) %>
-                                        </span>
-                                    </div>
-                                </div>
-                            <% } else { %>
-                                <div style="min-height: 60px; margin-bottom: 24px;"></div>
-                            <% } %>
-                            
-                            <% if (proyecto.estado_redmine) { %>
-                                <div style="min-height: 60px;">
-                                    <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
-                                        Estado
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                                        </svg>
-                                        <% 
-                                        const estadoProyecto = proyecto.estado_redmine || '';
-                                        let estadoProyectoStyle = 'font-weight: 500; color: var(--text-primary);';
-                                        if (estadoProyecto.toLowerCase() === 'abierto') {
-                                            estadoProyectoStyle += ' background: rgba(251, 146, 60, 0.15); padding: 4px 12px; border-radius: 12px; display: inline-block;';
-                                        } else if (estadoProyecto.toLowerCase() === 'cerrado' || estadoProyecto.toLowerCase() === 'entregado') {
-                                            estadoProyectoStyle += ' background: rgba(34, 197, 94, 0.15); padding: 4px 12px; border-radius: 12px; display: inline-block;';
-                                        }
-                                        %>
-                                        <span style="<%= estadoProyectoStyle %>">
-                                            <%= proyecto.estado_redmine %>
+                                            <%= new Date(idea.fecha_creacion).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' }) %>
                                         </span>
                                     </div>
                                 </div>
@@ -214,42 +173,42 @@
                     </div>
                     
                     <!-- Criterios de score (si existen) -->
-                    <% if (proyecto.facturacion || proyecto.impacto_cliente) { %>
+                    <% if (idea.facturacion || idea.impacto_cliente) { %>
                         <div style="border-top: 1px solid var(--border-color); padding-top: 24px;">
                             <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary);">
                                 Criterios de Evaluación
                             </h2>
                             
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                                <% if (proyecto.origen) { %>
+                                <% if (idea.origen) { %>
                                     <div style="padding: 16px; background: var(--hover-bg); border-radius: 12px;">
                                         <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
                                             Origen
                                         </div>
                                         <div style="font-size: 24px; font-weight: 600; color: var(--primary-color);">
-                                            <%= (parseFloat(proyecto.origen) || 0).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
+                                            <%= (parseFloat(idea.origen) || 0).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
                                         </div>
                                     </div>
                                 <% } %>
                                 
-                                <% if (proyecto.facturacion) { %>
+                                <% if (idea.facturacion) { %>
                                     <div style="padding: 16px; background: var(--hover-bg); border-radius: 12px;">
                                         <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
                                             Facturación
                                         </div>
                                         <div style="font-size: 24px; font-weight: 600; color: var(--primary-color);">
-                                            <%= (parseFloat(proyecto.facturacion) || 0).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
+                                            <%= (parseFloat(idea.facturacion) || 0).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
                                         </div>
                                     </div>
                                 <% } %>
                                 
-                                <% if (proyecto.impacto_cliente) { %>
+                                <% if (idea.impacto_cliente) { %>
                                     <div style="padding: 16px; background: var(--hover-bg); border-radius: 12px;">
                                         <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">
                                             Impacto Negocio
                                         </div>
                                         <div style="font-size: 24px; font-weight: 600; color: var(--primary-color);">
-                                            <%= (parseFloat(proyecto.impacto_cliente) || 0).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
+                                            <%= (parseFloat(idea.impacto_cliente) || 0).toFixed(1) %> <span style="font-size: 14px; color: var(--text-secondary);">/5</span>
                                         </div>
                                     </div>
                                 <% } %>
@@ -258,48 +217,56 @@
                     <% } %>
                 </div>
             </div>
-                </div>
-            </div>
         </div>
     </div>
     
     <script src="/js/main.js"></script>
     <script>
         let modoEdicion = false;
-        const redmineId = <%- JSON.stringify(proyecto.redmine_id || proyecto.id) %>;
+        const ideaId = <%= idea.id %>;
         
         function toggleEdicion() {
             modoEdicion = !modoEdicion;
             const btnEditar = document.getElementById('btnEditar');
             const btnEditarTexto = document.getElementById('btnEditarTexto');
+            const tituloView = document.getElementById('tituloView');
+            const tituloEdit = document.getElementById('tituloEdit');
             const descripcionView = document.getElementById('descripcionView');
             const descripcionEdit = document.getElementById('descripcionEdit');
             const seccionView = document.getElementById('seccionView');
             const seccionEdit = document.getElementById('seccionEdit');
+            
             if (modoEdicion) {
                 btnEditarTexto.textContent = 'Guardar';
+                if (tituloView) tituloView.style.display = 'none';
+                if (tituloEdit) tituloEdit.style.display = 'block';
                 descripcionView.style.display = 'none';
                 descripcionEdit.style.display = 'block';
                 if (seccionView) seccionView.style.display = 'none';
                 if (seccionEdit) seccionEdit.style.display = 'block';
             } else {
-                // Guardar cambios
                 guardarCambios();
             }
         }
         
         async function guardarCambios() {
+            const titulo = document.getElementById('tituloInput')?.value || '';
             const descripcion = document.getElementById('descripcionInput')?.value || '';
             const seccion = document.getElementById('seccionInput')?.value || '';
             
-            // Guardar proyecto
+            if (!titulo.trim()) {
+                alert('El título es requerido');
+                return;
+            }
+            
             try {
-                const response = await fetch(`/proyectos-internos/${encodeURIComponent(redmineId)}`, {
+                const response = await fetch(`/ideas-mejoras/${ideaId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
+                        titulo,
                         descripcion,
                         seccion
                     })
@@ -313,12 +280,31 @@
                     return;
                 }
                 
-                // Redirigir a /proyectos-internos después de guardar exitosamente
-                window.location.href = '/proyectos-internos';
+                window.location.href = '/ideas-mejoras';
             } catch (error) {
                 console.error('Error al guardar:', error);
                 alert('Error al guardar: ' + error.message);
-                return;
+            }
+        }
+        
+        async function confirmarEliminar() {
+            if (confirm('¿Estás seguro de eliminar esta idea? Esta acción no se puede deshacer.')) {
+                try {
+                    const response = await fetch(`/ideas-mejoras/${ideaId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        window.location.href = '/ideas-mejoras';
+                    } else {
+                        alert('Error al eliminar: ' + (data.error || 'Error desconocido'));
+                    }
+                } catch (error) {
+                    console.error('Error al eliminar:', error);
+                    alert('Error al eliminar: ' + error.message);
+                }
             }
         }
     </script>

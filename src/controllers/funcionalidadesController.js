@@ -373,7 +373,7 @@ exports.actualizarEpics = async (req, res) => {
             // Es un ID de issue numérico, obtener el issue y extraer el identifier del proyecto
             const baseUrl = REDMINE_URL.replace(/\/+$/, '');
             const url = `${baseUrl}/issues/${funcionalidad.redmine_id}.json?key=${REDMINE_TOKEN}`;
-            
+            console.log(`🔍 Obteniendo issue desde Redmine: ${url.replace(/key=[^&]+/, 'key=***')}`);
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {

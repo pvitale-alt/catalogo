@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %></title>
+    <link rel="icon" type="image/x-icon" href="/images/logo.ico">
     <link rel="stylesheet" href="/css/main.css?v=<%= Date.now() %>">
 </head>
 <body>
@@ -73,13 +74,6 @@
                                         oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight, 44)+'px'; buscarSugerencias(this.value); actualizarBotonLimpiar();"
                                         onkeydown="if(event.key === 'Enter') { event.preventDefault(); buscar(event); }"
                                     ><%= typeof filtros !== 'undefined' && filtros.busqueda ? filtros.busqueda : '' %></textarea>
-                                    <% if (typeof filtros !== 'undefined' && filtros.busqueda) { %>
-                                        <button onclick="limpiarBusqueda()" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; margin-left: 8px; color: #5f6368;" title="Limpiar búsqueda">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                                            </svg>
-                                        </button>
-                                    <% } %>
                                 </div>
                                 <!-- Sugerencias -->
                                 <div id="searchSuggestions" class="google-search-suggestions"></div>
@@ -368,6 +362,8 @@
             if (textarea) {
                 textarea.style.height = 'auto';
                 textarea.style.height = '44px';
+                // Actualizar botón de limpiar al cargar si hay texto
+                actualizarBotonLimpiar();
             }
             
             // Expandir sidebar por defecto en requerimientos clientes
@@ -405,18 +401,19 @@
             const searchBox = document.getElementById('searchBoxContainer');
             if (!searchInput || !searchBox) return;
             
-            // Buscar o crear botón de limpiar
-            let clearBtn = searchBox.querySelector('.clear-search-btn');
-            if (!clearBtn && searchInput.value.trim()) {
-                clearBtn = document.createElement('button');
+            // Eliminar todos los botones de limpiar existentes para evitar duplicados
+            const existingClearBtns = searchBox.querySelectorAll('.clear-search-btn');
+            existingClearBtns.forEach(btn => btn.remove());
+            
+            // Crear nuevo botón solo si hay texto
+            if (searchInput.value.trim()) {
+                const clearBtn = document.createElement('button');
                 clearBtn.className = 'clear-search-btn';
                 clearBtn.onclick = (e) => { e.stopPropagation(); limpiarBusqueda(); };
                 clearBtn.style.cssText = 'background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; margin-left: 8px; color: #5f6368;';
                 clearBtn.title = 'Limpiar búsqueda';
                 clearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
                 searchBox.appendChild(clearBtn);
-            } else if (clearBtn && !searchInput.value.trim()) {
-                clearBtn.remove();
             }
         }
         

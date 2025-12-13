@@ -4,7 +4,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %></title>
+    <link rel="icon" type="image/x-icon" href="/images/logo.ico">
     <link rel="stylesheet" href="/css/main.css?v=<%= Date.now() %>">
+    <style>
+        /* Grid específico para ideas-mejoras (Título, Sección, Fecha, Score) */
+        .ideas-mejoras .list-header,
+        .ideas-mejoras .list-item {
+            grid-template-columns: 2fr 150px 120px 80px;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        
+        .modal-close:hover {
+            background: var(--hover-bg);
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(49, 107, 161, 0.1);
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
 </head>
 <body>
     <!-- Header General -->
@@ -19,29 +131,498 @@
         <%- include('../partials/sidebar', { activeMenu: 'ideas-mejoras' }) %>
         
         <div class="main-content">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-left" style="display: flex; align-items: center; gap: 8px;">
+                    <!-- Botón Nueva Idea -->
+                    <button class="button" onclick="abrirModalNuevaIdea()" style="margin-right: 12px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Nueva Idea
+                    </button>
+                    
+                    <!-- Botones de filtro -->
+                    <div style="margin-right: 12px;">
+                        <button class="filter-btn <%= (typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) ? 'filter-btn-active' : '' %>" onclick="toggleFilterSecciones(this)" title="Filtrar por Sección">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
+                                <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+                            </svg>
+                            <span style="margin-left: 6px; font-size: 13px;">Sección</span>
+                        </button>
+                        <div class="filter-dropdown" id="filterSecciones" style="display: none;">
+                            <% secciones.forEach(seccion => { %>
+                                <label style="display: flex; align-items: center; padding: 10px 16px; cursor: pointer; transition: background 0.2s;" 
+                                       onmouseover="this.style.background='#f1f3f4'" 
+                                       onmouseout="this.style.background='white'">
+                                    <input 
+                                        type="checkbox" 
+                                        class="filter-checkbox-seccion" 
+                                        value="<%= seccion %>"
+                                        <%= (typeof filtros.secciones !== 'undefined' && filtros.secciones.includes(seccion)) ? 'checked' : '' %>
+                                        style="margin-right: 8px; cursor: pointer;"
+                                        onchange="aplicarFiltros()"
+                                    />
+                                    <span style="font-size: 13px;"><%= seccion %></span>
+                                </label>
+                            <% }) %>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="toolbar-right" style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: center;">
+                    <!-- Buscador estilo Google -->
+                    <div style="display: flex; align-items: center; gap: 8px; max-width: 600px; width: 100%; margin: 0 auto;">
+                        <div style="position: relative; flex: 1;">
+                            <form onsubmit="buscar(event)" class="google-search-box">
+                                <div class="google-search-box-container" id="searchBoxContainer">
+                                    <svg style="width: 20px; height: 20px; color: #9aa0a6; margin-right: 12px; flex-shrink: 0;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                                    </svg>
+                                    <textarea 
+                                        id="searchInput" 
+                                        class="google-search-input"
+                                        rows="1"
+                                        placeholder="Buscar ideas..."
+                                        autocomplete="off"
+                                        autocapitalize="off"
+                                        autocorrect="off"
+                                        spellcheck="false"
+                                        style="flex: 1; border: none; outline: none; font-size: 16px; font-family: 'Google Sans', 'Roboto', sans-serif; resize: none; overflow: hidden; padding: 0; margin: 0; background: transparent; line-height: 44px; max-height: 44px;"
+                                        oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight, 44)+'px'; buscarSugerencias(this.value); actualizarBotonLimpiar();"
+                                        onkeydown="if(event.key === 'Enter') { event.preventDefault(); buscar(event); }"
+                                    ><%= typeof filtros !== 'undefined' && filtros.busqueda ? filtros.busqueda : '' %></textarea>
+                                </div>
+                                <!-- Sugerencias -->
+                                <div id="searchSuggestions" class="google-search-suggestions"></div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="view-toggle">
+                        <button class="view-btn <%= vista === 'lista' ? 'active' : '' %>" onclick="cambiarVista('lista')" title="Vista de lista">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/>
+                            </svg>
+                        </button>
+                        <button class="view-btn <%= vista === 'tarjetas' ? 'active' : '' %>" onclick="cambiarVista('tarjetas')" title="Vista de tarjetas">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <span class="text-muted text-small">
+                        <%= ideas.length %> ideas
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Filtros aplicados (debajo del toolbar) -->
+            <% if (typeof filtros.secciones !== 'undefined' && filtros.secciones.length > 0) { %>
+                <div style="padding: 12px 24px; background: white; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <!-- Chips de filtros aplicados -->
+                        <% filtros.secciones.forEach(seccion => { %>
+                            <div class="filter-chip" style="display: inline-flex; align-items: center; background: #e8f0fe; color: var(--primary-color); padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: 500; gap: 8px;">
+                                <span>Sección: <%= seccion %></span>
+                                <button onclick="removerFiltroSeccion('<%= seccion %>')" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; color: var(--primary-color);">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        <% }) %>
+                    
+                    <button onclick="limpiarFiltros()" style="background: rgb(241, 243, 244); border: none; color: var(--text-secondary); font-size: 13px; cursor: pointer; padding: 6px 12px; border-radius: 16px; transition: background 0.2s;" onmouseover="this.style.background='#e8eaed'" onmouseout="this.style.background='rgb(241, 243, 244)'">
+                        Borrar filtros
+                    </button>
+                </div>
+            <% } %>
+            
             <!-- Contenido -->
-            <div class="content-area" style="padding-top: 0; position: relative;">
+            <div class="content-area" style="position: relative;">
                 <!-- Imagen de fondo con opacidad -->
                 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; opacity: 0.2; background-image: url('/images/cover.png'); background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none;"></div>
                 <div style="position: relative; z-index: 1;">
-                <div class="empty-state" style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
-                    <div class="empty-state-icon" style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">
-                        💡
+                <% if (ideas.length === 0) { %>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💡</div>
+                        <div class="empty-state-text">No se encontraron ideas</div>
+                        <div class="empty-state-subtext">Haz clic en "Nueva Idea" para agregar la primera idea o mejora</div>
                     </div>
-                    <div class="empty-state-text" style="font-size: 24px; margin-bottom: 8px; color: var(--text-primary); font-weight: 500;">
-                        Próximamente
+                <% } else if (vista === 'lista') { %>
+                    <!-- Vista de Lista -->
+                    <div class="list-view ideas-mejoras">
+                        <div class="list-header">
+                            <div onclick="ordenar('titulo')" style="cursor: pointer; text-align: center;" data-sort="titulo">
+                                Título
+                                <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M7 10l5 5 5-5z"/>
+                                </svg>
+                            </div>
+                            <div onclick="ordenar('seccion')" style="cursor: pointer;" data-sort="seccion">
+                                Sección
+                                <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M7 10l5 5 5-5z"/>
+                                </svg>
+                            </div>
+                            <div onclick="ordenar('fecha_creacion')" style="cursor: pointer;" class="desktop-only" id="fechaCreacionHeader" data-sort="fecha_creacion">
+                                Fecha Creación
+                                <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M7 10l5 5 5-5z"/>
+                                </svg>
+                            </div>
+                            <div onclick="ordenar('score_total')" style="cursor: pointer;" data-sort="score_total" class="<%= (typeof filtros !== 'undefined' && (!filtros.orden || filtros.orden === 'score_total')) ? 'sorted' : '' %>">
+                                Score
+                                <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M7 10l5 5 5-5z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <% ideas.forEach(idea => { %>
+                            <div class="list-item" onclick='verDetalle(<%= idea.id %>)'>
+                                <div class="item-title">
+                                    <div>
+                                        <div><%= idea.titulo || 'Sin título' %></div>
+                                        <% if (idea.descripcion) { %>
+                                            <div class="text-small text-muted text-truncate" style="max-width: 400px;">
+                                                <%= idea.descripcion %>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <div class="item-text"><%= idea.seccion || '-' %></div>
+                                <div class="item-text desktop-only">
+                                    <% if (idea.fecha_creacion) { %>
+                                        <%= new Date(idea.fecha_creacion).toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' }) %>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </div>
+                                <div>
+                                    <% 
+                                    let score = idea.score_calculado || idea.score_total || 0;
+                                    score = parseFloat(score) || 0;
+                                    let scoreClass = 'score-low';
+                                    if (score > 6.50) scoreClass = 'score-high';
+                                    else if (score > 4) scoreClass = 'score-medium';
+                                    %>
+                                    <span class="score-badge <%= scoreClass %>">
+                                        <%= score.toFixed(1) %>
+                                    </span>
+                                </div>
+                            </div>
+                        <% }) %>
                     </div>
-                    <div class="empty-state-subtext" style="font-size: 16px; color: var(--text-secondary); max-width: 500px; margin: 0 auto;">
-                        Esta sección está en desarrollo. Pronto podrás gestionar ideas y mejoras aquí.
+                <% } else { %>
+                    <!-- Vista de Tarjetas -->
+                    <div class="cards-view">
+                        <% ideas.forEach(idea => { %>
+                            <div class="card" onclick='verDetalle(<%= idea.id %>)'>
+                                <div class="card-header">
+                                    <h3 class="card-title"><%= idea.titulo || 'Sin título' %></h3>
+                                    <button class="card-menu" onclick='event.stopPropagation(); eliminarIdea(<%= idea.id %>)'>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <% if (idea.descripcion) { %>
+                                    <p class="card-description"><%= idea.descripcion %></p>
+                                <% } %>
+                                
+                                <div class="card-meta">
+                                    <% if (idea.seccion) { %>
+                                        <span class="card-tag">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                                            </svg>
+                                            <%= idea.seccion %>
+                                        </span>
+                                    <% } %>
+                                    
+                                    <% 
+                                    let score = idea.score_calculado || idea.score_total || 0;
+                                    score = parseFloat(score) || 0;
+                                    let scoreClass = 'score-low';
+                                    if (score > 6.50) scoreClass = 'score-high';
+                                    else if (score > 4) scoreClass = 'score-medium';
+                                    %>
+                                    <span class="score-badge <%= scoreClass %>">
+                                        ⭐ <%= score.toFixed(1) %>
+                                    </span>
+                                </div>
+                            </div>
+                        <% }) %>
                     </div>
-                </div>
+                <% } %>
+            </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- JavaScript -->
+    <!-- Modal Nueva Idea -->
+    <div class="modal-overlay" id="modalNuevaIdea">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Idea/Mejora</h2>
+                <button class="modal-close" onclick="cerrarModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="formNuevaIdea" onsubmit="guardarIdea(event)">
+                <div class="form-group">
+                    <label for="titulo">Título *</label>
+                    <input type="text" id="titulo" name="titulo" required placeholder="Ingrese el título de la idea">
+                </div>
+                
+                <div class="form-group">
+                    <label for="seccion">Sección</label>
+                    <select id="seccion" name="seccion">
+                        <option value="">Seleccionar sección...</option>
+                        <option value="Operatorias">Operatorias</option>
+                        <option value="Reportes e interfaces">Reportes e interfaces</option>
+                        <option value="Backoffice">Backoffice</option>
+                        <option value="Mercados">Mercados</option>
+                        <option value="Contabilidad">Contabilidad</option>
+                        <option value="Valuacion">Valuacion</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="descripcion">Descripción</label>
+                    <textarea id="descripcion" name="descripcion" placeholder="Descripción de la idea o mejora"></textarea>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="button button-secondary" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="button">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script src="/js/main.js"></script>
+    <script>
+        // Modal functions
+        function abrirModalNuevaIdea() {
+            document.getElementById('modalNuevaIdea').classList.add('active');
+            document.getElementById('titulo').focus();
+        }
+        
+        function cerrarModal() {
+            document.getElementById('modalNuevaIdea').classList.remove('active');
+            document.getElementById('formNuevaIdea').reset();
+        }
+        
+        async function guardarIdea(event) {
+            event.preventDefault();
+            
+            const titulo = document.getElementById('titulo').value.trim();
+            const seccion = document.getElementById('seccion').value;
+            const descripcion = document.getElementById('descripcion').value.trim();
+            
+            if (!titulo) {
+                alert('El título es requerido');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/ideas-mejoras', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        titulo,
+                        seccion,
+                        descripcion
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    cerrarModal();
+                    window.location.reload();
+                } else {
+                    alert('Error al crear la idea: ' + (data.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al crear la idea');
+            }
+        }
+        
+        // Cerrar modal con Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cerrarModal();
+            }
+        });
+        
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modalNuevaIdea').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modalNuevaIdea')) {
+                cerrarModal();
+            }
+        });
+        
+        // Función para buscar sugerencias
+        let timeoutSugerencias;
+        async function buscarSugerencias(query) {
+            clearTimeout(timeoutSugerencias);
+            
+            const suggestionsContainer = document.getElementById('searchSuggestions');
+            if (!query || query.length < 2) {
+                if (suggestionsContainer) {
+                    suggestionsContainer.style.display = 'none';
+                }
+                return;
+            }
+            
+            timeoutSugerencias = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/ideas-mejoras/sugerencias?q=${encodeURIComponent(query)}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.sugerencias && data.sugerencias.length > 0) {
+                        const html = data.sugerencias.map(idea => `
+                            <div class="google-suggestion-item" onclick="aplicarFiltroBusqueda('${idea.titulo.replace(/'/g, "\\'")}')" onmouseover="this.style.backgroundColor='#f1f3f4'" onmouseout="this.style.backgroundColor='white'">
+                                <svg style="width: 20px; height: 20px; color: #9aa0a6; margin-right: 12px; flex-shrink: 0;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                                </svg>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 14px; color: #202124; font-weight: 400;">${idea.titulo}</div>
+                                    ${idea.seccion ? `<div style="font-size: 12px; color: #5f6368; margin-top: 2px;">${idea.seccion}</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('');
+                        
+                        suggestionsContainer.innerHTML = html;
+                        suggestionsContainer.style.display = 'block';
+                    } else {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error al obtener sugerencias:', error);
+                    suggestionsContainer.style.display = 'none';
+                }
+            }, 300);
+        }
+        
+        function aplicarFiltroBusqueda(texto) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('busqueda', texto);
+            window.location.search = params.toString();
+        }
+        
+        // Cerrar sugerencias al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            const searchBox = document.querySelector('.google-search-box');
+            const suggestions = document.getElementById('searchSuggestions');
+            if (searchBox && suggestions && !searchBox.contains(e.target)) {
+                setTimeout(() => {
+                    suggestions.style.display = 'none';
+                }, 200);
+            }
+        });
+        
+        // Ajustar altura del textarea automáticamente
+        document.addEventListener('DOMContentLoaded', () => {
+            const textarea = document.getElementById('searchInput');
+            if (textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = '44px';
+                // Actualizar botón de limpiar al cargar si hay texto
+                actualizarBotonLimpiar();
+            }
+            
+            // Expandir sidebar por defecto
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.sidebar-toggle');
+            if (sidebar && sidebar.classList.contains('collapsed')) {
+                sidebar.classList.remove('collapsed');
+                if (toggle) {
+                    toggle.style.left = 'calc(var(--sidebar-width) - 16px)';
+                }
+                localStorage.setItem('sidebarCollapsed', 'false');
+            }
+        });
+        
+        function verDetalle(id) {
+            if (!id) return;
+            window.location.href = `/ideas-mejoras/${id}`;
+        }
+        
+        function limpiarBusqueda() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            const params = new URLSearchParams(window.location.search);
+            params.delete('busqueda');
+            window.location.search = params.toString();
+        }
+        
+        function actualizarBotonLimpiar() {
+            const searchInput = document.getElementById('searchInput');
+            const searchBox = document.getElementById('searchBoxContainer');
+            if (!searchInput || !searchBox) return;
+            
+            // Eliminar todos los botones de limpiar existentes para evitar duplicados
+            const existingClearBtns = searchBox.querySelectorAll('.clear-search-btn');
+            existingClearBtns.forEach(btn => btn.remove());
+            
+            // Crear nuevo botón solo si hay texto
+            if (searchInput.value.trim()) {
+                const clearBtn = document.createElement('button');
+                clearBtn.className = 'clear-search-btn';
+                clearBtn.onclick = (e) => { e.stopPropagation(); limpiarBusqueda(); };
+                clearBtn.style.cssText = 'background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; margin-left: 8px; color: #5f6368;';
+                clearBtn.title = 'Limpiar búsqueda';
+                clearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+                searchBox.appendChild(clearBtn);
+            }
+        }
+        
+        async function eliminarIdea(id) {
+            if (confirm('¿Estás seguro de eliminar esta idea?')) {
+                try {
+                    const response = await fetch(`/ideas-mejoras/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error al eliminar la idea');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al eliminar la idea');
+                }
+            }
+        }
+        
+        function buscar(event) {
+            if (event) event.preventDefault();
+            const query = document.getElementById('searchInput').value.trim();
+            const params = new URLSearchParams(window.location.search);
+            if (query) {
+                params.set('busqueda', query);
+            } else {
+                params.delete('busqueda');
+            }
+            window.location.search = params.toString();
+        }
+    </script>
 </body>
 </html>
-
