@@ -281,10 +281,19 @@
                         </div>
                         
                         <% ideas.forEach(idea => { %>
+                            <% 
+                            // Extraer solo lo que está después de " | " en el título
+                            let tituloCompleto = idea.titulo || 'Sin título';
+                            let tituloMostrar = tituloCompleto;
+                            if (tituloCompleto.includes(' | ')) {
+                                const partes = tituloCompleto.split(' | ');
+                                tituloMostrar = partes.length > 1 ? partes.slice(1).join(' | ').trim() : tituloCompleto;
+                            }
+                            %>
                             <div class="list-item" onclick='verDetalle(<%= idea.id %>)'>
                                 <div class="item-title">
                                     <div>
-                                        <div><%= idea.titulo || 'Sin título' %></div>
+                                        <div><%= tituloMostrar %></div>
                                         <% if (idea.descripcion) { %>
                                             <div class="text-small text-muted text-truncate" style="max-width: 400px;">
                                                 <%= idea.descripcion %>
@@ -319,9 +328,18 @@
                     <!-- Vista de Tarjetas -->
                     <div class="cards-view">
                         <% ideas.forEach(idea => { %>
+                            <% 
+                            // Extraer solo lo que está después de " | " en el título
+                            let tituloCompleto = idea.titulo || 'Sin título';
+                            let tituloMostrar = tituloCompleto;
+                            if (tituloCompleto.includes(' | ')) {
+                                const partes = tituloCompleto.split(' | ');
+                                tituloMostrar = partes.length > 1 ? partes.slice(1).join(' | ').trim() : tituloCompleto;
+                            }
+                            %>
                             <div class="card" onclick='verDetalle(<%= idea.id %>)'>
                                 <div class="card-header">
-                                    <h3 class="card-title"><%= idea.titulo || 'Sin título' %></h3>
+                                    <h3 class="card-title"><%= tituloMostrar %></h3>
                                     <button class="card-menu" onclick='event.stopPropagation(); eliminarIdea(<%= idea.id %>)'>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>

@@ -148,6 +148,47 @@
                 const btnGuardar = document.getElementById('btnGuardarScore');
                 const textoOriginal = btnGuardar.textContent;
                 
+                // Verificar si hay cambios sin guardar en el formulario de edición
+                const cambiosPendientes = localStorage.getItem('cambiosPendientes_' + funcionalidadId);
+                
+                if (cambiosPendientes) {
+                    // Hay cambios pendientes, intentar guardarlos primero
+                    try {
+                        const datosPendientes = JSON.parse(cambiosPendientes);
+                        
+                        // Determinar el endpoint según el tipo
+                        let endpoint = '';
+                        if (tipo === 'proyectos-internos') {
+                            endpoint = `/proyectos-internos/${encodeURIComponent(funcionalidadId)}`;
+                        } else if (tipo === 'funcionalidad') {
+                            endpoint = `/funcionalidades/${encodeURIComponent(funcionalidadId)}`;
+                        } else if (tipo === 'ideas-mejoras') {
+                            endpoint = `/ideas-mejoras/${funcionalidadId}`;
+                        }
+                        
+                        if (endpoint) {
+                            const response = await fetch(endpoint, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(datosPendientes)
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (data.success) {
+                                // Limpiar cambios pendientes
+                                localStorage.removeItem('cambiosPendientes_' + funcionalidadId);
+                            } else {
+                                console.warn('No se pudieron guardar los cambios pendientes:', data.error);
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('Error al guardar cambios pendientes:', error);
+                    }
+                }
+                
                 // Deshabilitar botón y mostrar "guardando"
                 btnGuardar.disabled = true;
                 btnGuardar.textContent = 'Guardando...';

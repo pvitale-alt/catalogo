@@ -191,3 +191,4 @@ class ScoreIdeasModel {
 
 module.exports = ScoreIdeasModel;
 
+

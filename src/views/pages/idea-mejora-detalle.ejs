@@ -40,7 +40,7 @@
                         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
                             <div style="flex: 1;">
                                 <div id="tituloView">
-                                    <h1 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">
+                                    <h1 style="font-size: 20px; font-weight: 500; color: var(--text-primary); margin-bottom: 12px;">
                                         <%= idea.titulo %>
                                     </h1>
                                 </div>
@@ -49,7 +49,7 @@
                                         type="text" 
                                         id="tituloInput" 
                                         value="<%= idea.titulo %>"
-                                        style="width: 100%; font-size: 28px; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-family: 'Google Sans', 'Roboto', sans-serif; color: var(--text-primary);"
+                                        style="width: 100%; font-size: 16px; font-weight: 500; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-family: 'Google Sans', 'Roboto', sans-serif; color: var(--text-primary);"
                                     />
                                 </div>
                                 
@@ -82,7 +82,7 @@
                                     </svg>
                                     <span id="btnEditarTexto">Editar</span>
                                 </button>
-                                <button onclick='window.location.href="/ideas-mejoras/<%= idea.id %>/score"' class="button">
+                                <button onclick="irAEvaluar()" class="button">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
@@ -244,19 +244,29 @@
                 descripcionEdit.style.display = 'block';
                 if (seccionView) seccionView.style.display = 'none';
                 if (seccionEdit) seccionEdit.style.display = 'block';
+                
+                // Guardar cambios pendientes en localStorage cuando se entra en modo edición
+                const titulo = document.getElementById('tituloInput')?.value || '';
+                const descripcion = document.getElementById('descripcionInput')?.value || '';
+                const seccion = document.getElementById('seccionInput')?.value || '';
+                localStorage.setItem('cambiosPendientes_' + ideaId, JSON.stringify({
+                    titulo,
+                    descripcion,
+                    seccion
+                }));
             } else {
                 guardarCambios();
             }
         }
         
-        async function guardarCambios() {
+        async function guardarCambios(redirigir = true) {
             const titulo = document.getElementById('tituloInput')?.value || '';
             const descripcion = document.getElementById('descripcionInput')?.value || '';
             const seccion = document.getElementById('seccionInput')?.value || '';
             
             if (!titulo.trim()) {
                 alert('El título es requerido');
-                return;
+                return false;
             }
             
             try {
@@ -277,14 +287,33 @@
                 if (!data.success) {
                     console.error('Error al guardar:', data.error || 'Error desconocido');
                     alert('Error al guardar: ' + (data.error || 'Error desconocido'));
-                    return;
+                    return false;
                 }
                 
-                window.location.href = '/ideas-mejoras';
+                // Limpiar cambios pendientes después de guardar exitosamente
+                localStorage.removeItem('cambiosPendientes_' + ideaId);
+                
+                if (redirigir) {
+                    window.location.href = '/ideas-mejoras';
+                }
+                return true;
             } catch (error) {
                 console.error('Error al guardar:', error);
                 alert('Error al guardar: ' + error.message);
+                return false;
             }
+        }
+        
+        async function irAEvaluar() {
+            // Si está en modo edición, guardar cambios primero
+            if (modoEdicion) {
+                const guardado = await guardarCambios(false);
+                if (!guardado) {
+                    return; // No redirigir si hubo error al guardar
+                }
+            }
+            // Redirigir a la página de score
+            window.location.href = `/ideas-mejoras/${ideaId}/score`;
         }
         
         async function confirmarEliminar() {
@@ -307,6 +336,30 @@
                 }
             }
         }
+        
+        // Guardar cambios pendientes en localStorage cuando se modifica el formulario
+        document.addEventListener('DOMContentLoaded', () => {
+            const tituloInput = document.getElementById('tituloInput');
+            const descripcionInput = document.getElementById('descripcionInput');
+            const seccionInput = document.getElementById('seccionInput');
+            
+            function actualizarCambiosPendientes() {
+                if (modoEdicion) {
+                    const titulo = tituloInput?.value || '';
+                    const descripcion = descripcionInput?.value || '';
+                    const seccion = seccionInput?.value || '';
+                    localStorage.setItem('cambiosPendientes_' + ideaId, JSON.stringify({
+                        titulo,
+                        descripcion,
+                        seccion
+                    }));
+                }
+            }
+            
+            if (tituloInput) tituloInput.addEventListener('input', actualizarCambiosPendientes);
+            if (descripcionInput) descripcionInput.addEventListener('input', actualizarCambiosPendientes);
+            if (seccionInput) seccionInput.addEventListener('change', actualizarCambiosPendientes);
+        });
     </script>
 </body>
 </html>

@@ -39,7 +39,7 @@
                     <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 24px; margin-bottom: 24px;">
                         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
                             <div style="flex: 1;">
-                                <h1 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">
+                                <h1 style="font-size: 20px; font-weight: 500; color: var(--text-primary); margin-bottom: 12px;">
                                     <%= funcionalidad.titulo_personalizado || funcionalidad.titulo || 'Sin título' %>
                                 </h1>
                                 
@@ -108,7 +108,7 @@
                                     </svg>
                                     <span id="btnEditarTexto">Editar</span>
                                 </button>
-                                <button onclick='window.location.href="/score/calculadora/" + encodeURIComponent(<%- JSON.stringify(funcionalidad.redmine_id || funcionalidad.id) %>)' class="button">
+                                <button onclick="irAEvaluar()" class="button">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                     </svg>
@@ -181,7 +181,7 @@
                                 id="tituloInput" 
                                 class="input" 
                                 value="<%= funcionalidad.titulo_personalizado || funcionalidad.titulo || '' %>"
-                                style="width: 100%; padding: 12px 16px; font-family: 'Google Sans', 'Roboto', sans-serif; font-size: 16px; border-radius: 12px; border: 1px solid var(--border-color); background: #f8f9fa; color: var(--text-primary); transition: all 0.2s ease;"
+                                style="width: 100%; padding: 8px 16px; font-family: 'Google Sans', 'Roboto', sans-serif; font-size: 16px; font-weight: 500; border-radius: 8px; border: 1px solid var(--border-color); background: #f8f9fa; color: var(--text-primary); transition: all 0.2s ease;"
                                 placeholder="Ingrese el título personalizado..."
                                 onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 2px rgba(13, 90, 162, 0.1)'; this.style.background='white'"
                                 onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'; this.style.background='#f8f9fa'"
@@ -469,13 +469,25 @@
                 if (seccionEdit) seccionEdit.style.display = 'block';
                 if (montoView) montoView.style.display = 'none';
                 if (montoEdit) montoEdit.style.display = 'block';
+                
+                // Guardar cambios pendientes en localStorage cuando se entra en modo edición
+                const tituloPersonalizado = document.getElementById('tituloInput')?.value || '';
+                const descripcion = document.getElementById('descripcionInput')?.value || '';
+                const seccion = document.getElementById('seccionInput')?.value || '';
+                const monto = document.getElementById('montoInput')?.value || '';
+                localStorage.setItem('cambiosPendientes_' + redmineId, JSON.stringify({
+                    titulo_personalizado: tituloPersonalizado.trim() || null,
+                    descripcion,
+                    seccion,
+                    monto: monto ? parseFloat(monto) : null
+                }));
             } else {
                 // Guardar cambios
                 guardarCambios();
             }
         }
         
-        async function guardarCambios() {
+        async function guardarCambios(redirigir = true) {
             const tituloPersonalizado = document.getElementById('tituloInput')?.value || '';
             const descripcion = document.getElementById('descripcionInput')?.value || '';
             const seccion = document.getElementById('seccionInput')?.value || '';
@@ -501,17 +513,63 @@
                 if (!data.success) {
                     console.error('Error al guardar:', data.error || 'Error desconocido');
                     alert('Error al guardar: ' + (data.error || 'Error desconocido'));
-                    return;
+                    return false;
                 }
                 
-                // Redirigir a /funcionalidades después de guardar exitosamente
-                window.location.href = '/funcionalidades';
+                // Limpiar cambios pendientes después de guardar exitosamente
+                localStorage.removeItem('cambiosPendientes_' + redmineId);
+                
+                if (redirigir) {
+                    // Redirigir a /funcionalidades después de guardar exitosamente
+                    window.location.href = '/funcionalidades';
+                }
+                return true;
             } catch (error) {
                 console.error('Error al guardar:', error);
                 alert('Error al guardar: ' + error.message);
-                return;
+                return false;
             }
         }
+        
+        async function irAEvaluar() {
+            // Si está en modo edición, guardar cambios primero
+            if (modoEdicion) {
+                const guardado = await guardarCambios(false);
+                if (!guardado) {
+                    return; // No redirigir si hubo error al guardar
+                }
+            }
+            // Redirigir a la página de score
+            window.location.href = `/score/calculadora/${encodeURIComponent(redmineId)}`;
+        }
+        
+        // Guardar cambios pendientes en localStorage cuando se modifica el formulario
+        document.addEventListener('DOMContentLoaded', () => {
+            const tituloInput = document.getElementById('tituloInput');
+            const descripcionInput = document.getElementById('descripcionInput');
+            const seccionInput = document.getElementById('seccionInput');
+            const montoInput = document.getElementById('montoInput');
+            
+            function actualizarCambiosPendientes() {
+                if (modoEdicion) {
+                    const tituloPersonalizado = tituloInput?.value || '';
+                    const descripcion = descripcionInput?.value || '';
+                    const seccion = seccionInput?.value || '';
+                    const monto = montoInput?.value || '';
+                    localStorage.setItem('cambiosPendientes_' + redmineId, JSON.stringify({
+                        titulo_personalizado: tituloPersonalizado.trim() || null,
+                        descripcion,
+                        seccion,
+                        monto: monto ? parseFloat(monto) : null
+                    }));
+                }
+            }
+            
+            if (tituloInput) tituloInput.addEventListener('input', actualizarCambiosPendientes);
+            if (descripcionInput) descripcionInput.addEventListener('input', actualizarCambiosPendientes);
+            if (seccionInput) seccionInput.addEventListener('change', actualizarCambiosPendientes);
+            if (montoInput) montoInput.addEventListener('input', actualizarCambiosPendientes);
+        });
         
         async function eliminarFuncionalidad() {
             if (!confirm('¿Estás seguro de eliminar esta funcionalidad? Esta acción no se puede deshacer.')) {

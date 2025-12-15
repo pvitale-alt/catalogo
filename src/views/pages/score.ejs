@@ -74,10 +74,19 @@
                             else if (index === 1) medalIcon = '🥈';
                             else if (index === 2) medalIcon = '🥉';
                         %>
+                            <% 
+                            // Extraer solo lo que está después de " | " en el título
+                            let tituloCompleto = func.titulo || 'Sin título';
+                            let tituloMostrar = tituloCompleto;
+                            if (tituloCompleto.includes(' | ')) {
+                                const partes = tituloCompleto.split(' | ');
+                                tituloMostrar = partes.length > 1 ? partes.slice(1).join(' | ').trim() : tituloCompleto;
+                            }
+                            %>
                             <div class="list-item" style="grid-template-columns: 2fr 1fr 100px 100px;">
                                 <div class="item-title">
                                     <div class="item-icon">
-                                        <%= (func.titulo || '?').substring(0, 1).toUpperCase() %>
+                                        <%= (tituloMostrar || '?').substring(0, 1).toUpperCase() %>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <% if (medalIcon) { %>
@@ -85,7 +94,7 @@
                                         <% } else { %>
                                             <span style="font-size: 14px; color: var(--text-secondary); font-weight: 500;"><%= index + 1 %></span>
                                         <% } %>
-                                        <%= (func.titulo || 'Sin título').length > 60 ? (func.titulo || 'Sin título').substring(0, 60) + '...' : (func.titulo || 'Sin título') %>
+                                        <%= tituloMostrar.length > 60 ? tituloMostrar.substring(0, 60) + '...' : tituloMostrar %>
                                     </div>
                                 </div>
                                 <div class="item-text"><%= func.seccion || '-' %></div>

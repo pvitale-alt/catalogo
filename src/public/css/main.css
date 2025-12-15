@@ -703,7 +703,7 @@ select.btn:focus {
 
 .list-header {
     display: grid;
-    grid-template-columns: 2fr 150px 100px 100px 120px 80px;
+    grid-template-columns: 100px 2fr 150px 100px 120px 80px;
     gap: 12px;
     padding: 16px 24px;
     background: var(--hover-bg);
@@ -806,14 +806,24 @@ select.btn:focus {
 }
 
 /* Headers centrados para sección */
-.list-header > div:nth-child(2) {
-    justify-content: center;
-    text-align: center;
+/* Header Sponsor (primera columna) - alinear a la izquierda */
+.list-header > div:nth-child(1) {
+    justify-content: flex-start;
+    text-align: left;
+    align-items: center;
     position: relative;
 }
 
-/* Posicionar el ícono de ordenamiento de forma absoluta para no afectar el centrado del texto en Sección */
-.list-header > div:nth-child(2) .sort-icon {
+/* Header Título (segunda columna) - alinear a la izquierda */
+.list-header > div:nth-child(2) {
+    justify-content: flex-start;
+    text-align: left;
+    align-items: center;
+    position: relative;
+}
+
+/* Posicionar el ícono de ordenamiento de forma absoluta para no afectar el centrado del texto en Sponsor */
+.list-header > div:nth-child(1) .sort-icon {
     position: absolute;
     right: 0;
     opacity: 0;
@@ -822,8 +832,30 @@ select.btn:focus {
     height: 18px;
 }
 
-.list-header > div:nth-child(2):hover .sort-icon,
-.list-header > div:nth-child(2).sorted .sort-icon {
+.list-header > div:nth-child(1):hover .sort-icon,
+.list-header > div:nth-child(1).sorted .sort-icon {
+    opacity: 1;
+}
+
+/* Header Sección (tercera columna) - centrar solo el texto, ignorando el ícono de ordenamiento */
+.list-header > div:nth-child(3) {
+    justify-content: center;
+    text-align: center;
+    position: relative;
+}
+
+/* Posicionar el ícono de ordenamiento de forma absoluta para no afectar el centrado del texto en Sección */
+.list-header > div:nth-child(3) .sort-icon {
+    position: absolute;
+    right: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+    width: 18px;
+    height: 18px;
+}
+
+.list-header > div:nth-child(3):hover .sort-icon,
+.list-header > div:nth-child(3).sorted .sort-icon {
     opacity: 1;
 }
 
@@ -849,27 +881,6 @@ select.btn:focus {
     opacity: 1;
 }
 
-/* Header Sponsor - centrar solo el texto, ignorando el ícono de ordenamiento */
-.list-header > div:nth-child(3) {
-    justify-content: center;
-    text-align: center;
-    position: relative;
-}
-
-/* Posicionar el ícono de ordenamiento de forma absoluta para no afectar el centrado del texto */
-.list-header > div:nth-child(3) .sort-icon {
-    position: absolute;
-    right: 0;
-    opacity: 0;
-    transition: opacity 0.2s;
-    width: 18px;
-    height: 18px;
-}
-
-.list-header > div:nth-child(3):hover .sort-icon,
-.list-header > div:nth-child(3).sorted .sort-icon {
-    opacity: 1;
-}
 
 .sort-icon {
     width: 18px;
@@ -890,7 +901,7 @@ select.btn:focus {
 
 .list-item {
     display: grid;
-    grid-template-columns: 2fr 150px 100px 100px 120px 80px;
+    grid-template-columns: 100px 2fr 150px 100px 120px 80px;
     gap: 12px;
     padding: 16px 24px;
     border-bottom: 1px solid var(--border-color);
@@ -941,8 +952,27 @@ select.btn:focus {
     white-space: nowrap;
 }
 
-/* Columna sección - ancho fijo, centrado */
-.list-item > .item-text:nth-child(2) {
+/* Columna sponsor/proyecto centrada (primera columna) */
+.list-item > .item-text:nth-child(1),
+.list-item > .sponsor-cell {
+    width: 100px;
+    min-width: 100px;
+    max-width: 150px;
+    font-size: 14px;
+    text-align: left !important;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: visible;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 4px 8px;
+    margin: 0;
+    color: rgba(76, 120, 164, 1);
+}
+
+/* Columna sección - ancho fijo, centrado (tercera columna) */
+.list-item > .item-text:nth-child(3) {
     font-size: 12px;
     white-space: nowrap;
     overflow: hidden;
@@ -952,25 +982,7 @@ select.btn:focus {
     max-width: 150px;
 }
 
-/* Columna sponsor/proyecto centrada */
-.list-item > .item-text:nth-child(3),
-.list-item > .sponsor-cell {
-    width: 100px;
-    min-width: 100px;
-    max-width: 150px;
-    font-size: 12px;
-    text-align: center !important;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow: visible;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 8px;
-    margin: 0;
-}
-
-/* Columna fecha creación - centrada para alinearse con el header */
+/* Columna fecha creación - centrada para alinearse con el header (cuarta columna) */
 .list-item > .item-text:nth-child(4) {
     max-width: 100px;
     font-size: 12px;
