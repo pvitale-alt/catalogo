@@ -722,7 +722,7 @@ select.btn:focus {
 /* Grid específico para requerimientos de clientes (sin Sección) */
 .req-clientes.list-header,
 .req-clientes.list-item {
-    grid-template-columns: 2fr 300px 100px 120px 120px 80px; /* Título, Proyecto, Reventa, Estado, Redmine, Score */
+    grid-template-columns: 150px 2fr 100px 120px 120px 80px; /* Cliente, Título, Reventa, Estado, Redmine, Score */
 }
 
 /* Asegurar que todos los divs respeten el ancho del grid */
@@ -745,6 +745,18 @@ select.btn:focus {
     gap: 0;
     padding: 0;
     margin: 0;
+}
+
+/* En req-clientes, la segunda columna (Título) debe ir alineada a la izquierda */
+.req-clientes.list-header > div:nth-child(2) {
+    justify-content: flex-start;
+    text-align: left;
+    align-items: center;
+}
+
+/* Y su texto interno también alineado a la izquierda */
+.req-clientes.list-header > div:nth-child(2) > span {
+    text-align: left;
 }
 
 /* Asegurar que el span con el texto esté centrado y ocupe todo el ancho disponible */
@@ -781,6 +793,27 @@ select.btn:focus {
     gap: 0;
     padding: 0;
     margin: 0;
+}
+
+/* En req-clientes, la columna de Título (segunda) debe estar alineada a la izquierda */
+.req-clientes.list-item > .item-title {
+    justify-content: flex-start;
+    text-align: left;
+    align-items: flex-start;
+    gap: 0; /* evitar sangría adicional dentro de la columna de título */
+}
+
+/* Asegurar que el texto .func-title dentro del título quede totalmente a la izquierda */
+.req-clientes .item-title .func-title {
+    text-align: left;
+    width: 100%;
+}
+
+/* En req-clientes, la primera columna (Cliente) alineada a la izquierda */
+.req-clientes.list-item > div:nth-child(1) {
+    justify-content: flex-start !important;
+    text-align: left !important;
+    align-items: flex-start !important;
 }
 
 /* Sobrescribir estilos específicos de .item-text para req-clientes */

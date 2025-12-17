@@ -154,16 +154,16 @@
                     </div>
                 <% } else if (vista === 'lista') { %>
                     <!-- Vista de Lista -->
-                    <div class="list-view proyectos-internos">
+                        <div class="list-view proyectos-internos">
                         <div class="list-header req-clientes">
+                            <div class="desktop-only">
+                                <span>Cliente</span>
+                            </div>
                             <div onclick="ordenar('titulo')" style="cursor: pointer;" data-sort="titulo">
                                 Título
                                 <svg class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M7 10l5 5 5-5z"/>
                                 </svg>
-                            </div>
-                            <div class="desktop-only">
-                                <span>Proyecto</span>
                             </div>
                             <div class="desktop-only">
                                 <span>Reventa</span>
@@ -199,13 +199,15 @@
                                     tituloMostrar = partes.length > 1 ? partes.slice(1).join(' | ').trim() : tituloCompleto;
                                 }
                                 %>
+                                <!-- Columna 1: Cliente (nuevo, pequeña) -->
+                                <div class="item-text desktop-only">
+                                    <%= requerimiento.cliente || '-' %>
+                                </div>
+                                <!-- Columna 2: Título (agrandada por grid, sigue siendo la principal) -->
                                 <div class="item-title">
                                     <div>
                                         <div class="func-title"><%= tituloMostrar %></div>
                                     </div>
-                                </div>
-                                <div class="item-text desktop-only">
-                                    <%= requerimiento.proyecto_completo || '-' %>
                                 </div>
                                 <div class="item-text desktop-only">
                                     <%= (requerimiento.cf_91 === '1' || requerimiento.cf_91 === 1) ? 'Si' : (requerimiento.cf_91 === '0' || requerimiento.cf_91 === 0) ? 'No' : (requerimiento.cf_91 || '-') %>
