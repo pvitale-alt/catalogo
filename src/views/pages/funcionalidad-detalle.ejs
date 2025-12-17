@@ -39,7 +39,7 @@
                     <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 24px; margin-bottom: 24px;">
                         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
                             <div style="flex: 1;">
-                                <h1 style="font-size: 20px; font-weight: 500; color: var(--text-primary); margin-bottom: 12px;">
+                                <h1 style="font-size: 18px; font-weight: 500; color: var(--text-primary); margin-bottom: 12px;">
                                     <%= funcionalidad.titulo_personalizado || funcionalidad.titulo || 'Sin título' %>
                                 </h1>
                                 
@@ -352,17 +352,43 @@
                         <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">
                             Productivo en
                         </h2>
-                        <div class="client-tags-container">
-                            <% if (typeof clientesFuncionalidad !== 'undefined' && clientesFuncionalidad.length > 0) { %>
+                        <% if (typeof clientesFuncionalidad !== 'undefined' && clientesFuncionalidad.length > 0) { %>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
                                 <% clientesFuncionalidad.forEach(cliente => { %>
-                                    <span class="client-tag">
-                                        <%= cliente.nombre %>
-                                    </span>
+                                    <div style="display: flex; align-items: center; justify-content: flex-start; gap: 6px; padding: 8px 12px; border-radius: 8px; background: #f8f9fa; border: 1px solid var(--border-color);">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span class="client-tag" style="margin: 0;">
+                                                <%= cliente.nombre %>
+                                            </span>
+                                        </div>
+                                        <!-- Vista solo lectura de versión -->
+                                        <div class="version-view" data-cliente-id="<%= cliente.id %>" style="font-size: 13px; color: var(--text-secondary);">
+                                            <% if (cliente.version) { %>
+                                                <span>
+                                                    Versión <strong><%= cliente.version %></strong>
+                                                </span>
+                                            <% } else { %>
+                                                <span style="font-style: italic;">Sin versión</span>
+                                            <% } %>
+                                        </div>
+                                        <!-- Campo editable de versión (visible solo en modo edición) -->
+                                        <div class="version-edit" data-cliente-id="<%= cliente.id %>" style="display: none; min-width: 140px;">
+                                            <input 
+                                                type="text" 
+                                                class="input input-version-cliente"
+                                                data-cliente-id="<%= cliente.id %>"
+                                                value="<%= cliente.version || '' %>"
+                                                placeholder="Ej: 1.0, 2025.11, etc."
+                                                style="width: 100%; padding: 6px 10px; font-size: 13px; border-radius: 8px; border: 1px solid var(--border-color);"
+                                                onblur="actualizarVersionClienteFuncionalidad(<%= cliente.id %>, this.value)"
+                                            />
+                                        </div>
+                                    </div>
                                 <% }) %>
-                            <% } else { %>
-                                <span style="color: var(--text-secondary); font-style: italic;">Sin clientes en estado productivo</span>
-                            <% } %>
-                        </div>
+                            </div>
+                        <% } else { %>
+                            <span style="color: var(--text-secondary); font-style: italic;">Sin clientes en estado productivo</span>
+                        <% } %>
                     </div>
                     
                     <!-- Interesados Reventa -->
@@ -460,6 +486,8 @@
             const seccionEdit = document.getElementById('seccionEdit');
             const montoView = document.getElementById('montoView');
             const montoEdit = document.getElementById('montoEdit');
+            const versionViews = document.querySelectorAll('.version-view');
+            const versionEdits = document.querySelectorAll('.version-edit');
             if (modoEdicion) {
                 btnEditarTexto.textContent = 'Guardar';
                 if (tituloSection) tituloSection.style.display = 'block';
@@ -469,6 +497,9 @@
                 if (seccionEdit) seccionEdit.style.display = 'block';
                 if (montoView) montoView.style.display = 'none';
                 if (montoEdit) montoEdit.style.display = 'block';
+                // Mostrar campos de edición de versión para clientes productivos
+                versionViews.forEach(v => v.style.display = 'none');
+                versionEdits.forEach(v => v.style.display = 'block');
                 
                 // Guardar cambios pendientes en localStorage cuando se entra en modo edición
                 const tituloPersonalizado = document.getElementById('tituloInput')?.value || '';
@@ -483,6 +514,9 @@
                 }));
             } else {
                 // Guardar cambios
+                // Ocultar campos de edición de versión y mostrar vista
+                versionViews.forEach(v => v.style.display = 'block');
+                versionEdits.forEach(v => v.style.display = 'none');
                 guardarCambios();
             }
         }
@@ -735,6 +769,40 @@
                     clearInterval(parseInt(overlay.dataset.intervalo));
                 }
                 overlay.remove();
+            }
+        }
+
+        // Actualizar versión de un cliente para esta funcionalidad (Productivo en)
+        async function actualizarVersionClienteFuncionalidad(clienteId, version) {
+            try {
+                const response = await fetch(`/funcionalidades/${encodeURIComponent(redmineId)}/clientes/${encodeURIComponent(clienteId)}/version`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ version: version && version.trim() ? version.trim() : null })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    console.error('Error al actualizar versión:', data.error || 'Error desconocido');
+                    alert('Error al actualizar la versión del cliente');
+                    return;
+                }
+
+                // Actualizar texto de la vista solo lectura correspondiente
+                const view = document.querySelector(`.version-view[data-cliente-id="${clienteId}"]`);
+                if (view) {
+                    if (version && version.trim()) {
+                        view.innerHTML = `Versión <strong>${version.trim()}</strong>`;
+                    } else {
+                        view.innerHTML = '<span style="font-style: italic;">Sin versión</span>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error al actualizar versión:', error);
+                alert('Error al actualizar la versión del cliente');
             }
         }
     </script>

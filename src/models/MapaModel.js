@@ -52,6 +52,7 @@ class MapaModel {
                     cliente_id,
                     funcionalidad_id,
                     estado_comercial,
+                    version,
                     created_at,
                     updated_at
                 FROM cliente_funcionalidad
@@ -64,6 +65,7 @@ class MapaModel {
                 const key = `${rel.cliente_id}-${rel.funcionalidad_id}`;
                 relacionesMap[key] = {
                     estado: rel.estado_comercial,
+                    version: rel.version || null,
                     created_at: rel.created_at,
                     updated_at: rel.updated_at
                 };
@@ -227,15 +229,16 @@ class MapaModel {
     }
 
     /**
-     * Obtener clientes de una funcionalidad (por redmine_id)
-     */
-    /**
      * Obtener clientes de una funcionalidad (por redmine_id) con estado "productivo"
+     * Incluye la versión (campo version en cliente_funcionalidad)
      */
     static async obtenerClientesPorFuncionalidad(redmine_id) {
         try {
             const query = `
-                SELECT c.*
+                SELECT 
+                    c.id,
+                    c.nombre,
+                    cf.version
                 FROM clientes c
                 INNER JOIN cliente_funcionalidad cf ON c.id = cf.cliente_id
                 WHERE cf.funcionalidad_id = $1 AND cf.estado_comercial = 'productivo'
@@ -245,6 +248,29 @@ class MapaModel {
             return result.rows;
         } catch (error) {
             console.error('Error al obtener clientes por funcionalidad:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Actualizar versión de una relación cliente-funcionalidad (productivo en)
+     * Si la relación no existe, la crea con estado_comercial actual (o NULL)
+     */
+    static async actualizarVersionClienteFuncionalidad(clienteId, funcionalidadId, version) {
+        try {
+            const query = `
+                INSERT INTO cliente_funcionalidad (cliente_id, funcionalidad_id, version)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (cliente_id, funcionalidad_id)
+                DO UPDATE SET
+                    version = EXCLUDED.version,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING *
+            `;
+            const result = await pool.query(query, [clienteId, funcionalidadId, version || null]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error al actualizar versión cliente-funcionalidad:', error);
             throw error;
         }
     }

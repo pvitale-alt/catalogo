@@ -201,7 +201,7 @@
                                 %>
                                 <div class="item-title">
                                     <div>
-                                        <div><%= tituloMostrar %></div>
+                                        <div class="func-title"><%= tituloMostrar %></div>
                                     </div>
                                 </div>
                                 <div class="item-text desktop-only">
@@ -274,7 +274,7 @@
                             %>
                             <div class="card" onclick='verDetalle(<%- JSON.stringify(requerimiento.redmine_id || requerimiento.id) %>)'>
                                 <div class="card-header">
-                                    <h3 class="card-title"><%= tituloMostrar %></h3>
+                                    <h3 class="card-title func-title"><%= tituloMostrar %></h3>
                                     <button class="card-menu" onclick='event.stopPropagation(); eliminarRequerimiento(<%- JSON.stringify(requerimiento.redmine_id || requerimiento.id) %>)'>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>

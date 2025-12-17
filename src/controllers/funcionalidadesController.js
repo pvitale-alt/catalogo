@@ -333,6 +333,34 @@ exports.obtenerClientes = async (req, res) => {
 };
 
 /**
+ * Actualizar versión de un cliente para una funcionalidad (Productivo en)
+ */
+exports.actualizarVersionClienteFuncionalidad = async (req, res) => {
+    try {
+        const { id, clienteId } = req.params; // id = redmine_id de la funcionalidad
+        const { version } = req.body;
+
+        const MapaModel = require('../models/MapaModel');
+        const relacion = await MapaModel.actualizarVersionClienteFuncionalidad(
+            parseInt(clienteId, 10),
+            id,
+            version
+        );
+
+        res.json({
+            success: true,
+            relacion
+        });
+    } catch (error) {
+        console.error('Error al actualizar versión cliente-funcionalidad:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al actualizar la versión del cliente para la funcionalidad'
+        });
+    }
+};
+
+/**
  * Actualizar epics de una funcionalidad desde Redmine
  */
 exports.actualizarEpics = async (req, res) => {

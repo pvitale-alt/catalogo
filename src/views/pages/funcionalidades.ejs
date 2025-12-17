@@ -246,7 +246,7 @@
                                 <div class="item-text sponsor-cell"><%= (func.cliente || '-').trim() %></div>
                                 <div class="item-title">
                                     <div>
-                                        <div><%= tituloMostrar %></div>
+                                        <div class="func-title"><%= tituloMostrar %></div>
                                         <% if (func.descripcion) { %>
                                             <div class="text-small text-muted text-truncate" style="max-width: 400px;">
                                                 <%= func.descripcion %>
@@ -304,7 +304,7 @@
                             %>
                             <div class="card" onclick='verDetalle(<%- JSON.stringify(func.redmine_id || func.id) %>)'>
                                 <div class="card-header">
-                                    <h3 class="card-title"><%= tituloMostrar %></h3>
+                                    <h3 class="card-title func-title"><%= tituloMostrar %></h3>
                                     <button class="card-menu" onclick='event.stopPropagation(); eliminarFuncionalidad(<%- JSON.stringify(func.redmine_id || func.id) %>)'>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>

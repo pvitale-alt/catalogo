@@ -709,7 +709,7 @@ select.btn:focus {
     background: var(--hover-bg);
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #5e6061; /* gris oscuro para labels de tabla */
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -931,6 +931,11 @@ select.btn:focus {
     gap: 8px;
 }
 
+/* Títulos de funcionalidades ligeramente más pequeños (para textos largos) */
+.func-title {
+    font-size: 14px;
+}
+
 .item-icon {
     width: 24px;
     height: 24px;
@@ -958,7 +963,7 @@ select.btn:focus {
     width: 100px;
     min-width: 100px;
     max-width: 150px;
-    font-size: 14px;
+    font-size: 12px;
     text-align: left !important;
     white-space: normal;
     word-wrap: break-word;
@@ -983,8 +988,18 @@ select.btn:focus {
     max-width: 150px;
 }
 
-/* Columna fecha creación - centrada para alinearse con el header (cuarta columna) */
+/* Columna fecha creación - centrada para alinearse con el header (cuarta columna por defecto) */
 .list-item > .item-text:nth-child(4) {
+    max-width: 100px;
+    font-size: 12px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ajuste específico para proyectos internos: la fecha es la 3ra columna de la fila */
+.proyectos-internos .list-item > .item-text.desktop-only:nth-child(3) {
     max-width: 100px;
     font-size: 12px;
     text-align: center;
