@@ -967,6 +967,8 @@ select.btn:focus {
 /* Títulos de funcionalidades ligeramente más pequeños (para textos largos) */
 .func-title {
     font-size: 14px;
+    text-align: left;
+    display: block;
 }
 
 .item-icon {
