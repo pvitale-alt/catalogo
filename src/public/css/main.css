@@ -964,6 +964,15 @@ select.btn:focus {
     gap: 8px;
 }
 
+/* Alinear siempre el contenido de título al borde izquierdo de su columna */
+.list-item > .item-title {
+    justify-content: flex-start !important;
+    text-align: left !important;
+    align-items: flex-start !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
 /* Títulos de funcionalidades ligeramente más pequeños (para textos largos) */
 .func-title {
     font-size: 14px;
