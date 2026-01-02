@@ -276,7 +276,8 @@
                                 </div>
                                 <div>
                                     <% 
-                                    let score = func.score_calculado || func.score_total || 0;
+                                    // Usar solo score_calculado (columna generada con la fórmula actualizada)
+                                    let score = func.score_calculado !== null && func.score_calculado !== undefined ? func.score_calculado : 0;
                                     score = parseFloat(score) || 0;
                                     let scoreClass = 'score-low';
                                     if (score > 6.50) scoreClass = 'score-high';
@@ -336,7 +337,8 @@
                                     <% } %>
                                     
                                     <% 
-                                    let score = func.score_calculado || func.score_total || 0;
+                                    // Usar solo score_calculado (columna generada con la fórmula actualizada)
+                                    let score = func.score_calculado !== null && func.score_calculado !== undefined ? func.score_calculado : 0;
                                     score = parseFloat(score) || 0;
                                     let scoreClass = 'score-low';
                                     if (score > 6.50) scoreClass = 'score-high';
@@ -356,8 +358,17 @@
         </div>
     </div>
     
+    <script>
+        // Definir verDetalle inmediatamente para que esté disponible cuando se rendericen los elementos
+        function verDetalle(id) {
+            if (!id) return;
+            window.location.href = `/funcionalidades/${encodeURIComponent(id)}`;
+        }
+    </script>
     <script src="/js/main.js"></script>
     <script>
+        // Si main.js redefine verDetalle, se usará esa versión; si no, se usa la definida arriba
+        
         // Función para buscar sugerencias
         let timeoutSugerencias;
         async function buscarSugerencias(query) {

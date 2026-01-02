@@ -679,8 +679,8 @@ class ScoreCalculator {
         const promedioPositivos = sumaPesosPositivos > 0 ? sumaPonderadaPositivos / (sumaPesosPositivos / 100) : 0;
         const promedioNegativos = sumaPesosNegativos > 0 ? sumaPonderadaNegativos / (sumaPesosNegativos / 100) : 0;
         
-        // Score = promedio positivos - (promedio negativos × 0.25)
-        const score = promedioPositivos - (promedioNegativos * 0.25);
+        // Score = promedio positivos - (promedio negativos × 0.20)
+        const score = promedioPositivos - (promedioNegativos * 0.20);
         
         // Actualizar display del score
         const scoreDisplay = document.getElementById('scoreTotal');

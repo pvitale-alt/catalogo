@@ -1089,6 +1089,49 @@ select.btn:focus {
     gap: 20px;
 }
 
+/* Responsive cards - adaptación según tamaño de pantalla */
+@media (max-width: 480px) {
+    .cards-view {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 640px) {
+    .cards-view {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+    .cards-view {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .cards-view {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+    }
+}
+
+@media (min-width: 1025px) and (max-width: 1440px) {
+    .cards-view {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+}
+
+@media (min-width: 1441px) {
+    .cards-view {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+    }
+}
+
 .card {
     background: white;
     border-radius: 12px;
@@ -1413,6 +1456,7 @@ select.btn:focus {
     
     .cards-view {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
 }
 

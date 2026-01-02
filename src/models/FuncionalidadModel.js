@@ -29,7 +29,7 @@ class FuncionalidadModel {
                     v.titulo ILIKE $${paramCount} OR 
                     v.descripcion ILIKE $${paramCount} OR 
                     v.cliente ILIKE $${paramCount} OR 
-                    v.seccion ILIKE $${paramCount}
+                    f.seccion ILIKE $${paramCount}
                 )`;
                 params.push(`%${filtros.busqueda}%`);
                 paramCount++;
@@ -37,14 +37,14 @@ class FuncionalidadModel {
 
             // Filtro por sección (compatibilidad con filtro único)
             if (filtros.seccion) {
-                query += ` AND v.seccion = $${paramCount}`;
+                query += ` AND f.seccion = $${paramCount}`;
                 params.push(filtros.seccion);
                 paramCount++;
             }
             
             // Filtro por múltiples secciones
             if (filtros.secciones && filtros.secciones.length > 0) {
-                query += ` AND v.seccion = ANY($${paramCount})`;
+                query += ` AND f.seccion = ANY($${paramCount})`;
                 params.push(filtros.secciones);
                 paramCount++;
             }
@@ -78,8 +78,18 @@ class FuncionalidadModel {
             // Manejar ordenamiento especial para score_total
             if (orden === 'score_total') {
                 query += ` ORDER BY COALESCE(s.score_calculado, 0) ${direccion}`;
-            } else {
+            } else if (orden === 'created_at') {
+                // created_at está en la tabla funcionalidades, no en redmine_funcionalidades
+                query += ` ORDER BY COALESCE(f.created_at, v.fecha_creacion) ${direccion} NULLS LAST`;
+            } else if (orden === 'seccion') {
+                // seccion está en la tabla funcionalidades, no en redmine_funcionalidades
+                query += ` ORDER BY f.seccion ${direccion} NULLS LAST`;
+            } else if (orden === 'fecha_creacion') {
+                // fecha_creacion está en redmine_funcionalidades
                 query += ` ORDER BY v.${orden} ${direccion} NULLS LAST`;
+            } else {
+                // Intentar primero en v, luego en f
+                query += ` ORDER BY COALESCE(v.${orden}, f.${orden}) ${direccion} NULLS LAST`;
             }
 
             const result = await pool.query(query, params);
@@ -371,10 +381,12 @@ class FuncionalidadModel {
             const query = `
                 SELECT 
                     COUNT(*) as total_funcionalidades,
-                    AVG(score_total) as score_promedio,
-                    SUM(monto) as monto_total,
-                    COUNT(DISTINCT seccion) as total_secciones
-                FROM v_funcionalidades_completas
+                    AVG(COALESCE(s.score_calculado, 0)) as score_promedio,
+                    SUM(COALESCE(f.monto, 0)) as monto_total,
+                    COUNT(DISTINCT f.seccion) as total_secciones
+                FROM v_funcionalidades_completas v
+                LEFT JOIN funcionalidades f ON v.redmine_id = f.redmine_id
+                LEFT JOIN score s ON v.redmine_id = s.funcionalidad_id
             `;
             const result = await pool.query(query);
             return result.rows[0];

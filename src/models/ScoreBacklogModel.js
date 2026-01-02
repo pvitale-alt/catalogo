@@ -42,6 +42,7 @@ class ScoreBacklogModel {
             }
             
             // Actualizar SOLO los criterios, NO los pesos (evita overflow)
+            // score_calculado es una columna generada, se calcula automáticamente
             const query = `
                 UPDATE score_backlog
                 SET origen = $1,
@@ -249,8 +250,8 @@ class ScoreBacklogModel {
         const sumaPesosNegativos = peso_esfuerzo + peso_incertidumbre + peso_riesgo;
         const promedioNegativos = sumaPesosNegativos > 0 ? sumaPonderadaNegativos / (sumaPesosNegativos / 100) : 0;
         
-        // Score = promedio positivos - (promedio negativos × 0.25) - MISMA FÓRMULA
-        const score = promedioPositivos - (promedioNegativos * 0.25);
+        // Score = promedio positivos - (promedio negativos × 0.20) - MISMA FÓRMULA
+        const score = promedioPositivos - (promedioNegativos * 0.20);
         return parseFloat(score.toFixed(2));
     }
 

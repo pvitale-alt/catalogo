@@ -40,6 +40,7 @@ class ScoreIdeasModel {
             }
             
             // Actualizar solo los criterios
+            // score_calculado es una columna generada, se calcula automáticamente
             const query = `
                 UPDATE score_ideas
                 SET origen = $1,
@@ -184,7 +185,7 @@ class ScoreIdeasModel {
         const sumaPesosNegativos = peso_esfuerzo + peso_incertidumbre + peso_riesgo;
         const promedioNegativos = sumaPesosNegativos > 0 ? sumaPonderadaNegativos / (sumaPesosNegativos / 100) : 0;
         
-        const score = promedioPositivos - (promedioNegativos * 0.25);
+        const score = promedioPositivos - (promedioNegativos * 0.20);
         return parseFloat(score.toFixed(2));
     }
 }
