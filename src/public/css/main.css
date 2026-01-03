@@ -698,7 +698,8 @@ select.btn:focus {
     background: white;
     border-radius: 12px;
     box-shadow: var(--shadow);
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: visible;
 }
 
 .list-header {
@@ -711,12 +712,20 @@ select.btn:focus {
     font-weight: 600;
     color: #5e6061; /* gris oscuro para labels de tabla */
     border-bottom: 1px solid var(--border-color);
+    min-width: fit-content;
 }
 
 /* Grid específico para proyectos internos (con Estado y Services ID) */
 .proyectos-internos .list-header,
 .proyectos-internos .list-item {
     grid-template-columns: 2fr 150px 100px 100px 100px 120px 80px;
+}
+
+/* Grid específico para ideas-mejoras (Título, Sección, Fecha Creación, Score) */
+.ideas-mejoras .list-header,
+.ideas-mejoras .list-item {
+    grid-template-columns: 2fr 150px 100px 80px;
+    min-width: 100%;
 }
 
 /* Grid específico para requerimientos de clientes (sin Sección) */
@@ -941,6 +950,7 @@ select.btn:focus {
     transition: all 0.2s;
     cursor: pointer;
     align-items: center;
+    min-width: fit-content;
 }
 
 /* Eliminar icono item-icon */
@@ -1044,6 +1054,23 @@ select.btn:focus {
 
 /* Ajuste específico para proyectos internos: la fecha es la 3ra columna de la fila */
 .proyectos-internos .list-item > .item-text.desktop-only:nth-child(3) {
+    max-width: 100px;
+    font-size: 12px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Centrar header "Estado" en proyectos internos (4ta columna) */
+.proyectos-internos .list-header > div:nth-child(4) {
+    justify-content: center;
+    text-align: center;
+    position: relative;
+}
+
+/* Centrar valores de "Estado" en proyectos internos (4ta columna) */
+.proyectos-internos .list-item > .item-text.desktop-only:nth-child(4) {
     max-width: 100px;
     font-size: 12px;
     text-align: center;
