@@ -328,13 +328,13 @@ class MapaModel {
                     v.redmine_id,
                     v.titulo,
                     f.titulo_personalizado,
-                    v.seccion,
+                    f.seccion,
                     v.cliente AS sponsor,
                     COUNT(DISTINCT cf.cliente_id) as cantidad_clientes
                 FROM v_funcionalidades_completas v
                 LEFT JOIN funcionalidades f ON v.redmine_id = f.redmine_id
                 LEFT JOIN cliente_funcionalidad cf ON v.redmine_id = cf.funcionalidad_id
-                GROUP BY v.redmine_id, v.titulo, f.titulo_personalizado, v.seccion, v.cliente
+                GROUP BY v.redmine_id, v.titulo, f.titulo_personalizado, f.seccion, v.cliente
                 HAVING COUNT(DISTINCT cf.cliente_id) > 0
                 ORDER BY cantidad_clientes DESC
                 LIMIT $1
