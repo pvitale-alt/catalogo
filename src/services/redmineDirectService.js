@@ -644,7 +644,7 @@ async function obtenerIssuesProyectosInternos(options = {}) {
  * @param {Object} options
  * @param {string} options.project_id - ID o identifier del proyecto (default 'ut')
  * @param {string} options.tracker_id - Tracker ID (default 29)
- * @param {string} options.status_id - Estado (default '*')
+ * @param {string} options.status_id - Estado (default '!6' = excluye Cerrado)
  * @param {number} options.limit - Límite (max 100)
  */
 async function obtenerIssuesReqClientes(options = {}) {
@@ -652,7 +652,8 @@ async function obtenerIssuesReqClientes(options = {}) {
 
     const projectId = options.project_id || 'ut';
     const trackerId = options.tracker_id || '29';
-    const statusId = options.status_id || '*';
+    // Por defecto excluir estado "Cerrado" (id=6) - trae todos los demás estados
+    const statusId = options.status_id || '!6';
     const limit = Math.min(options.limit || 100, 100);
 
     const params = new URLSearchParams({

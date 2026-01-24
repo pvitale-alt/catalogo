@@ -369,7 +369,8 @@ async function obtenerEstadoSincronizacion() {
 async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
     const REQ_CLIENTES_PROJECT_ID = 'ut';
     const DEFAULT_TRACKER_ID = '29';
-    const DEFAULT_STATUS_ID = '*';
+    // Excluir estado "Cerrado" (id=6) - trae todos los demás estados
+    const DEFAULT_STATUS_ID = '!6';
     
     // Usar tracker_id por defecto si no se especifica
     const trackerIdFinal = tracker_id || DEFAULT_TRACKER_ID;
@@ -386,7 +387,7 @@ async function sincronizarReqClientes(tracker_id = null, maxTotal = null) {
     console.log('   =================================\n');
     console.log(`   Proyecto ID: ${REQ_CLIENTES_PROJECT_ID}`);
     console.log(`   Tracker ID: ${trackerIdFinal}`);
-    console.log(`   Status ID: ${DEFAULT_STATUS_ID}`);
+    console.log(`   Status ID: ${DEFAULT_STATUS_ID} (excluye Cerrado)`);
     console.log(`   Límite: ${limitFinal}`);
     console.log(`   ⚠️ SOLO CONSULTA - No se realizan modificaciones en Redmine\n`);
     

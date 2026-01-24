@@ -39,41 +39,6 @@ El **Catálogo de Funcionalidades** es una aplicación web diseñada para gestio
 
 ---
 
-## Arquitectura del Sistema
-
-### Stack Tecnológico
-
-| Componente | Tecnología |
-|------------|------------|
-| Backend | Node.js + Express |
-| Frontend | EJS (templates) |
-| Base de Datos | PostgreSQL (Neon) |
-| Autenticación | JWT (JSON Web Tokens) |
-| Hosting | Vercel (Serverless) |
-| Integración | API REST de Redmine |
-
-### Estructura del Proyecto
-
-```
-catalogo/
-├── src/
-│   ├── app.js                 # Entrada principal
-│   ├── config/
-│   │   └── database.js        # Configuración PostgreSQL
-│   ├── controllers/           # Lógica de negocio
-│   ├── middleware/
-│   │   └── authJWT.js         # Autenticación JWT
-│   ├── models/                # Modelos de datos
-│   ├── routes/                # Definición de rutas
-│   ├── services/              # Servicios (Redmine, sincronización)
-│   ├── public/                # Archivos estáticos
-│   └── views/                 # Templates EJS
-├── package.json
-└── vercel.json
-```
-
----
-
 ## Variables de Entorno
 
 ### ⚙️ Configuración Requerida
@@ -82,30 +47,14 @@ Crear un archivo `.env` con las siguientes variables:
 
 ```env
 # Base de Datos
-DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+DATABASE_URL=
 
-# Servidor
-PORT=3000
-NODE_ENV=development
+LOGIN_PASSWORD=
+LOGIN_PASSWORD_ADMIN=
 
-# Autenticación
-LOGIN_PASSWORD=tu_contraseña_usuario
-LOGIN_PASSWORD_ADMIN=tu_contraseña_admin
-JWT_SECRET=tu_clave_secreta_jwt
-SESSION_SECRET=tu_clave_secreta_sesion
 
-# Redmine
-REDMINE_URL=https://tu-redmine.com
-REDMINE_TOKEN=tu_api_key_de_redmine
 
-# Configuración de Sincronización
-REDMINE_DEFAULT_PROJECT=ut-bancor
-REDMINE_DEFAULT_TRACKER=19
-REDMINE_INTERNAL_PROJECT=ut-mercap
-REDMINE_INTERNAL_TRACKER=19
-REDMINE_INTERNAL_CF23=*
-REDMINE_SYNC_LIMIT=100
-REDMINE_LIMIT_PER_REQUEST=100
+
 
 # Filtros de Proyectos (Catálogo)
 REDMINE_PROJECT_PRODUCT_FILTER=Unitrade
@@ -116,23 +65,6 @@ REDMINE_CUSTOM_FIELD_CLIENTE_ID=20
 REDMINE_CUSTOM_FIELD_SPONSOR_ID=94
 REDMINE_CUSTOM_FIELD_REVENTA_ID=93
 
-# Debug (opcional)
-DEBUG_SESSIONS=false
-```
-
-### 📝 Descripción de Variables
-
-| Variable | Descripción | Requerida |
-|----------|-------------|-----------|
-| `DATABASE_URL` | URL de conexión a PostgreSQL (Neon) | ✅ |
-| `LOGIN_PASSWORD` | Contraseña para usuarios normales | ✅ |
-| `LOGIN_PASSWORD_ADMIN` | Contraseña para administradores | ✅ |
-| `JWT_SECRET` | Clave secreta para tokens JWT | ✅ |
-| `REDMINE_URL` | URL base de la instancia Redmine | ✅ |
-| `REDMINE_TOKEN` | API Key de Redmine | ✅ |
-| `REDMINE_DEFAULT_PROJECT` | Proyecto por defecto para sincronización | ❌ |
-| `REDMINE_DEFAULT_TRACKER` | ID del tracker Epic (default: 19) | ❌ |
-| `REDMINE_SYNC_LIMIT` | Límite de issues a sincronizar | ❌ |
 
 ---
 
@@ -567,11 +499,13 @@ POST /api/redmine/sincronizar-req-clientes
 Headers: Authorization (Admin requerido)
 Body: {
   "tracker_id": "29",              // Opcional, default: 29
-  "max_total": 100                 // Opcional, default: 100 (máx: 100)
+  "max_total": 100,                // Opcional, default: 100 (máx: 100)
+  "status_id": "!6"                // Opcional, default: "!6" (excluye Cerrado)
 }
 ```
 
 **Validaciones:**
+- Por defecto excluye issues con estado **Cerrado** (status_id="!6")
 - Omite proyectos "UT Mercap | Mantenimiento"
 - Omite issues cuyo `proyecto_completo` ya existe en `redmine_funcionalidades`
 - Extrae y normaliza `cf_91` (Es Reventa) y `cf_92` (Proyecto Sponsor)
