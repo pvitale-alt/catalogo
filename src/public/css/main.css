@@ -28,11 +28,17 @@ button.btn-primary,
     --shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
 }
 
+html {
+    height: 100%;
+    overflow: hidden;
+}
+
 body {
     font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: #f8f9fa;
     color: var(--text-primary);
-    overflow-x: hidden;
+    overflow: hidden;
+    height: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     padding-top: 56px; /* Espacio para el header fijo */
@@ -89,10 +95,10 @@ h3 {
     letter-spacing: 0;
 }
 
-/* Layout principal tipo Drive */
+/* Layout principal tipo Drive (altura = viewport menos header fijo, una sola barra de scroll en .main-content) */
 .app-container {
     display: flex;
-    height: 100vh;
+    height: calc(100vh - 56px);
     overflow: hidden;
 }
 
@@ -230,7 +236,8 @@ h3 {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    min-height: 0; /* permite que el flex hijo haga scroll */
+    overflow-y: auto;
 }
 
 /* Header */
@@ -686,10 +693,10 @@ select.btn:focus {
     background: var(--hover-bg);
 }
 
-/* Área de contenido scrolleable */
+/* Área de contenido (scroll en .main-content, no aquí) */
 .content-area {
     flex: 1;
-    overflow-y: auto;
+    overflow: visible;
     padding: 24px;
 }
 

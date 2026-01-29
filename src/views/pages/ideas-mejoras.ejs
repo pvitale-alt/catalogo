@@ -295,9 +295,9 @@
                                     <div>
                                         <div><%= tituloMostrar %></div>
                                         <% if (idea.descripcion) { 
-                                            // Limitar la descripción a 80 caracteres para evitar desbordamiento
+                                            // Limitar la descripción para evitar desbordamiento (104 = 80 + 30%)
                                             let descripcionMostrar = idea.descripcion;
-                                            const maxLength = 80;
+                                            const maxLength = 104;
                                             if (descripcionMostrar.length > maxLength) {
                                                 descripcionMostrar = descripcionMostrar.substring(0, maxLength) + '...';
                                             }
